@@ -294,7 +294,7 @@
   {
     "name": "function_plot",
     "domain": "general",
-    "description": "Plots y = f(x) on labelled axes. Expression may use x, pi, e, sin, cos, tan, exp, log, sqrt, abs, + - * / ^.",
+    "description": "Plots y = f(x) on labelled axes. Expression may use x, pi, e; sin, cos, tan, asin, acos, atan; sinh, cosh, tanh; exp, log, ln, log10, log2, sqrt, abs, floor, ceil; and + - * / % ^ (or **).",
     "params": {
       "expression": {
         "type": "string",

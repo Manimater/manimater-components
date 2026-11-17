@@ -15,7 +15,7 @@
 | `equation` | Shows one formula (LaTeX) with an optional title and a legend explaining each symbol. | `latex`*, `title`, `terms` |
 | `flowchart` | A chain of 2-8 labelled boxes connected by arrows (process, signal path, cause and effect). | `steps`*, `title` |
 | `focus_ring` | A pulsing ring drawn round one idea in a row to say 'look here', optionally moving on to a second one. | `items`*, `focus`, `then`, `title` |
-| `function_plot` | Plots y = f(x) on labelled axes. Expression may use x, pi, e, sin, cos, tan, exp, log, sqrt, abs, + - * / ^. | `expression`*, `title`, `x_min`, `x_max`, `y_min`, `y_max`, `x_label`, `y_label` |
+| `function_plot` | Plots y = f(x) on labelled axes. Expression may use x, pi, e; sin, cos, tan, asin, acos, atan; sinh, cosh, tanh; exp, log, ln, log10, log2, sqrt, abs, floor, ceil;... | `expression`*, `title`, `x_min`, `x_max`, `y_min`, `y_max`, `x_label`, `y_label` |
 | `hierarchy_tree` | Hierarchy tree (org chart or taxonomy): a root with parents and children below it. | `center`*, `branches`* |
 | `spotlight` | Stage-light focus: a row of ideas appears, then everything dims except the one the narration is about, then the lights come back up. Good for 'of all these, this is... | `items`*, `focus`, `title` |
 | `timeline` | Timeline: events in order, each a year and a short description, highlighted one by one. | `events`*, `title` |

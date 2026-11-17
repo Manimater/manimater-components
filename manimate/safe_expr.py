@@ -12,7 +12,8 @@ _UN = {ast.UAdd: op.pos, ast.USub: op.neg}
 _FUNCS = {
     "sin": math.sin, "cos": math.cos, "tan": math.tan, "exp": math.exp, "log": math.log,
     "ln": math.log, "sqrt": math.sqrt, "abs": abs, "sinh": math.sinh, "cosh": math.cosh, "tanh": math.tanh,
-    "atan": math.atan,
+    "atan": math.atan, "asin": math.asin, "acos": math.acos,
+    "log10": math.log10, "log2": math.log2, "floor": math.floor, "ceil": math.ceil,
 }
 _CONSTS = {"pi": math.pi, "e": math.e}
 MAX_LEN = 120
