@@ -40,6 +40,53 @@ _NAMES = "|".join(sorted(KNOWN, key=len, reverse=True))
 _SLASHED = re.compile(r"(?:(?<=^)|(?<=[\s(\[{^_=+\-*,;:|]))[/\\]{1,3}(" + _NAMES + r")(?![A-Za-z])")
 _DOUBLE = re.compile(r"\\{2,}(?=[A-Za-z])")
 
+_TEXT_MODE_START = re.compile(r"\\(?:text|mathrm|textbf)\s*\{")
+
+
+def _repair_slashed_commands(tex: str) -> str:
+    """Repair malformed TeX commands outside text-mode spans."""
+    parts = []
+    cursor = 0
+
+    for match in _TEXT_MODE_START.finditer(tex):
+        # Repair the section before this text-mode span.
+        parts.append(
+            _SLASHED.sub(lambda m: "\\" + m.group(1), tex[cursor:match.start()])
+        )
+
+        # Find the matching closing brace, accounting for nested braces.
+        open_brace = match.end() - 1
+        depth = 1
+        i = open_brace + 1
+
+        while i < len(tex) and depth:
+            if tex[i] == "\\":
+                # Skip escaped characters so escaped braces don't affect depth.
+                i += 2
+                continue
+
+            if tex[i] == "{":
+                depth += 1
+            elif tex[i] == "}":
+                depth -= 1
+
+            i += 1
+
+        # If the span is unclosed, preserve the remainder unchanged.
+        if depth:
+            parts.append(tex[match.start():])
+            return "".join(parts)
+
+        # Preserve the entire text-mode span unchanged.
+        parts.append(tex[match.start():i])
+        cursor = i
+
+    # Repair anything remaining after the final text-mode span.
+    parts.append(
+        _SLASHED.sub(lambda m: "\\" + m.group(1), tex[cursor:])
+    )
+
+    return "".join(parts)
 
 def normalize_tex(tex: str) -> str:
     """Repair a formula so MathTex gets real commands. Idempotent, and never changes a formula that was already right."""
@@ -50,7 +97,7 @@ def normalize_tex(tex: str) -> str:
         s = s.replace(ch, bs)
     s = s.strip().strip("$").strip()
     s = _DOUBLE.sub(r"\\", s)
-    s = _SLASHED.sub(lambda m: "\\" + m.group(1), s)
+    s = _repair_slashed_commands(s)
     # \\ followed by a name is now \name; a lone "\" before a space or the end is meaningless.
     s = re.sub(r"\\(?=\s|$)", "", s) if not re.search(r"\\\\", s) else s
     # Text mode words such as "\text{ rate }" are fine. Bare operator words are not: "exp(x)" is fine too, so leave them alone.
