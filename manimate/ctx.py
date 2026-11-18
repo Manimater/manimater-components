@@ -17,7 +17,11 @@ STAGE_H = 5.8
 
 
 def wrap(text: str, width: int) -> str:
-    return "\n".join(textwrap.wrap(text, width=width)) or text
+    """Wrap each line separately, preserving explicit breaks and empty lines."""
+    lines = []
+    for line in text.split("\n"):
+        lines.extend(textwrap.wrap(line, width=width) or [line])
+    return "\n".join(lines)
 
 
 def label(text: str, size: int = 28, color: str = theme.FG, width: int | None = None, align: str = "center", **kw) -> Mobject:
