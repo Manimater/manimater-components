@@ -2973,6 +2973,43 @@
     }
   },
   {
+    "name": "doppler_effect",
+    "domain": "physics",
+    "description": "Shows how a moving source compresses wavefronts ahead and spreads them behind, changing observed pitch.",
+    "params": {
+      "source_speed": {
+        "type": "number",
+        "required": false,
+        "description": "Source speed, non-negative and below wave_speed",
+        "default": 0.4
+      },
+      "wave_speed": {
+        "type": "number",
+        "required": false,
+        "description": "Wave propagation speed, greater than zero",
+        "default": 1.0
+      },
+      "frequency": {
+        "type": "number",
+        "required": false,
+        "description": "Frequency emitted by the source, greater than zero",
+        "default": 1.0
+      },
+      "show_formula": {
+        "type": "boolean",
+        "required": false,
+        "description": "Whether to display the Doppler frequency equations",
+        "default": true
+      }
+    },
+    "example": {
+      "source_speed": 0.4,
+      "wave_speed": 1.0,
+      "frequency": 1.0,
+      "show_formula": true
+    }
+  },
+  {
     "name": "electric_field",
     "domain": "physics",
     "description": "Field arrows around 1-4 point charges.",
