@@ -2535,6 +2535,58 @@
     }
   },
   {
+    "name": "gradient_descent",
+    "domain": "machine-learning",
+    "description": "Compares learning-rate behaviour or lets you explore a custom one-dimensional gradient-descent run.",
+    "params": {
+      "mode": {
+        "type": "string",
+        "required": false,
+        "description": "comparison or exploration",
+        "default": "comparison",
+        "choices": [
+          "comparison",
+          "exploration"
+        ]
+      },
+      "learning_rate": {
+        "type": "number",
+        "required": false,
+        "description": "custom step size, used in exploration mode",
+        "default": 0.5
+      },
+      "start_x": {
+        "type": "number",
+        "required": false,
+        "description": "initial parameter value; clamped to the visible range",
+        "default": 1.5
+      },
+      "steps": {
+        "type": "integer",
+        "required": false,
+        "description": "number of updates, 1-10",
+        "default": 8
+      },
+      "loss": {
+        "type": "string",
+        "required": false,
+        "description": "loss curve: bowl or bumpy",
+        "default": "bowl",
+        "choices": [
+          "bowl",
+          "bumpy"
+        ]
+      }
+    },
+    "example": {
+      "mode": "comparison",
+      "learning_rate": 0.5,
+      "start_x": 1.5,
+      "steps": 8,
+      "loss": "bowl"
+    }
+  },
+  {
     "name": "kv_cache",
     "domain": "machine-learning",
     "description": "The KV cache in LLM decoding: each new token writes its key and value into a slot (a sliding window overwrites the oldest), or a timeline comparing the work with and without the cache.",
