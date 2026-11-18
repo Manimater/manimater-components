@@ -1,6 +1,6 @@
 [project]
 name = "manimater-components"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Tested, reusable Manim animation components for explainer videos: one JSON-driven library."
 readme = "README.md"
 license = { text = "MIT" }
@@ -30,3 +30,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["manimate*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "manimate.__version__" }
