@@ -60,6 +60,67 @@ def test_integer_accepts_whole_float():
     assert not errs and out.scenes[0].params["poles"] == 4
 
 
+
+@pytest.mark.parametrize(
+    ("param_type", "value"),
+    [
+        ("number", float("nan")),
+        ("number", float("inf")),
+        ("number", float("-inf")),
+        ("integer", float("nan")),
+        ("integer", float("inf")),
+        ("integer", float("-inf")),
+        ("number[]", [1.0, float("nan")]),
+        ("number[]", [1.0, float("inf")]),
+        ("number[]", [1.0, float("-inf")]),
+    ],
+)
+def test_non_finite_numbers_are_rejected(param_type, value):
+    comp = registry.Component(
+        name="test",
+        description="test",
+        domain="test",
+        params={
+            "value": registry.Param(
+                type=param_type,
+                description="test parameter",
+            )
+        },
+        example={},
+        fn=lambda: None,
+    )
+
+    _, errors = registry.validate_params(comp, {"value": value})
+
+    assert errors
+    assert "param 'value'" in errors[0]
+
+
+def test_integer_accepts_very_large_python_int():
+    large_integer = 10**1000
+
+    comp = registry.Component(
+        name="test",
+        description="test",
+        domain="test",
+        params={
+            "value": registry.Param(
+                type="integer",
+                description="test parameter",
+            )
+        },
+        example={},
+        fn=lambda: None,
+    )
+
+    clean, errors = registry.validate_params(
+        comp, {"value": large_integer}
+    )
+
+    assert not errors
+    assert clean["value"] == large_integer
+
+
 def test_scene_limits():
     _, errs = validate(sb(*[("callout", {"text": "x"})] * (MAX_SCENES + 1)))
     assert errs

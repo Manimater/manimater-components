@@ -1,6 +1,7 @@
 """Component registry: one declaration drives validation, the LLM catalog, and docs."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -90,7 +91,17 @@ def all_components() -> list[Component]:
 
 
 def _is_number(v: Any) -> bool:
-    return isinstance(v, (int, float)) and not isinstance(v, bool)
+    if isinstance(v, bool):
+        return False
+    if isinstance(v, int):
+        return True
+    return isinstance(v, float) and math.isfinite(v)
+
+
+def _is_integer(v: Any) -> bool:
+    return _is_number(v) and (
+        isinstance(v, int) or v.is_integer()
+    )
 
 
 def _check_type(ptype: str, v: Any) -> str | None:
@@ -103,7 +114,7 @@ def _check_type(ptype: str, v: Any) -> str | None:
         if not _is_number(v):
             return "must be a number"
     elif ptype == "integer":
-        if not (_is_number(v) and float(v).is_integer()):
+        if not _is_integer(v):
             return "must be an integer"
     elif ptype == "boolean":
         if not isinstance(v, bool):
@@ -133,7 +144,7 @@ def validate_params(comp: Component, params: dict[str, Any]) -> tuple[dict[str, 
                 clean[key] = spec.default
             continue
         v = params[key]
-        if spec.type == "integer" and _is_number(v) and float(v).is_integer():
+        if spec.type == "integer" and _is_integer(v):
             v = int(v)
         err = _check_type(spec.type, v)
         if err is None and spec.choices is not None and v not in spec.choices:
