@@ -46,7 +46,7 @@ def spoken_text(scene: Scene) -> str:
     own words. Two exceptions keep a scene from being cut off or silent. A callout whose narration is empty speaks its
     key concept, and one whose narration ends in a colon (a lead-in like "So, in one line:") speaks it right after.
     The opening title_card speaks its title only when it has no narration; with narration, that is the hook, a curious
-    question spoken in place of the written title. Keep worker/src/split.ts in step (tests/fixtures/split_parity.json)."""
+    question spoken in place of the written title. The spoken text must match the Manimater app's narration splitter."""
     narration = scene.narration.strip()
     if scene.component == "callout" and (not narration or narration.endswith(":")):
         text = str(scene.params.get("text") or "").strip()
