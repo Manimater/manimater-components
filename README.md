@@ -58,7 +58,7 @@ Manimater turns a prompt into a narrated explainer video. This library is what m
   validates every value against the catalog before anything runs, so nothing arbitrary is executed.
 - **Tested.** Every component has an `example` that must render, and CI dry-runs all of them against a real Manim scene.
 - **Reusable.** Written once, used in every video. Adding a component makes every project that uses the library better.
-- **Built on the community.** 27 components draw with open-source Manim plugins, all credited in
+- **Built on the community.** Many components draw with open-source Manim plugins, all credited in
   [docs/THIRD_PARTY.md](docs/THIRD_PARTY.md).
 
 ## Quick start
