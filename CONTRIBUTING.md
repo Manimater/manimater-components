@@ -65,7 +65,7 @@ may ask you, or the LLM, for changes. You keep credit: your GitHub name is on th
 ## How your contribution reaches Manimater
 
 When a pull request is merged here, CI opens a pull request in [Manimater](https://github.com/bishnt/manimater) with the
-same change, so the app and this library never drift. See [docs/SYNC.md](docs/SYNC.md).
+same change, so the app and this library never drift.
 
 ## Licence
 

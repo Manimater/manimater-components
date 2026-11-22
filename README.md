@@ -128,7 +128,7 @@ New components are the best way to help, and you do not have to code.
 
 [Manimater](https://github.com/bishnt/manimater) uses this library to render videos, and the two copies are kept in sync by
 CI: a change merged here is proposed to the app as a pull request, and a component change made in the app is mirrored
-here. The synced paths are listed in [docs/SYNC.md](docs/SYNC.md).
+here.
 
 ## License
 
