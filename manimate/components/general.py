@@ -178,17 +178,31 @@ def flowchart(ctx: Ctx, steps: list[str], title: str = "") -> None:
         ctx.wait(max(0, step - 0.7))
 
 
+def _point_count(value: list[str] | None) -> str | None:
+    n = len(value or [])
+    if 1 <= n <= 5:
+        return None
+    return "use 1 to 5 points; split a longer list into another component"
+
+
 @component(
-    "compare_two", "Two columns comparing two things side by side, each with a title and 2-5 points.",
-    {"left_title": P("string", "Left column title", required=True), "left_points": P("string[]", "Left points", required=True),
-     "right_title": P("string", "Right column title", required=True), "right_points": P("string[]", "Right points", required=True)},
+    "compare_two", "Two columns comparing two things side by side, each with a title and 1-5 points.",
+    {"left_title": P("string", "Left column title", required=True),
+     "left_points": P("string[]", "Left points (1 to 5)", required=True, validator=_point_count),
+     "right_title": P("string", "Right column title", required=True),
+     "right_points": P("string[]", "Right points (1 to 5)", required=True, validator=_point_count)},
     {"left_title": "Synchronous", "left_points": ["Constant speed", "Needs DC excitation"],
      "right_title": "Induction", "right_points": ["Speed drops with load", "No rotor supply"]},
 )
 def compare_two(ctx: Ctx, left_title: str, left_points: list[str], right_title: str, right_points: list[str]) -> None:
     def column(title: str, pts: list[str], color: str) -> VGroup:
         head = label(title, 34, color, width=22, weight="BOLD")
-        items = VGroup(*[label("• " + p, 26, theme.FG, width=30, align="left") for p in pts[:5]]).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+        # A Dot beside the text keeps a wrapped line under the words instead of
+        # under the bullet character.
+        items = VGroup(*[
+            VGroup(Dot(color=color, radius=0.06), label(p, 26, theme.FG, width=26, align="left")).arrange(RIGHT, buff=0.3)
+            for p in pts[:5]
+        ]).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
         return VGroup(head, items).arrange(DOWN, aligned_edge=LEFT, buff=0.5)
 
     left = column(left_title, left_points, theme.ACCENT).move_to((-3.1, 0.5, 0))
