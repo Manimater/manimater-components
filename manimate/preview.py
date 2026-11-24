@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -67,12 +68,22 @@ def render(name: str, params: dict | None = None, seconds: float = 8.0, quality:
     return target
 
 
+def _validate_seconds(val: str) -> float:
+    try:
+        f = float(val)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"seconds must be a valid number (got {val!r})")
+    if not math.isfinite(f) or f < 1.0 or f > 150.0:
+        raise argparse.ArgumentTypeError(f"seconds must be a finite number between 1 and 150 (got {val!r})")
+    return f
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m manimate.preview", description=__doc__.split("\n\n")[0])
     ap.add_argument("name", nargs="?", help="component name")
     ap.add_argument("--list", action="store_true", help="list every component and exit")
     ap.add_argument("--params", help="JSON object of params (default: the component's example)")
-    ap.add_argument("--seconds", type=float, default=8.0, help="scene length in seconds (default 8)")
+    ap.add_argument("--seconds", type=_validate_seconds, default=8.0, help="scene length in seconds (default 8)")
     ap.add_argument("--quality", choices=sorted(QUALITY_FLAGS), default="low")
     ap.add_argument("--out", type=Path, default=Path("previews"))
     args = ap.parse_args(argv)
