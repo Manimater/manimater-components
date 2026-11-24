@@ -1,6 +1,7 @@
 """Component registry: one declaration drives validation, the LLM catalog, and docs."""
 from __future__ import annotations
 
+import copy
 import math
 from dataclasses import dataclass, field
 from typing import Any, Callable
@@ -141,7 +142,7 @@ def validate_params(comp: Component, params: dict[str, Any]) -> tuple[dict[str, 
             if spec.required:
                 errors.append(f"missing required param '{key}'")
             elif spec.default is not None:
-                clean[key] = spec.default
+                clean[key] = copy.deepcopy(spec.default)
             continue
         v = params[key]
         if spec.type == "integer" and _is_integer(v):

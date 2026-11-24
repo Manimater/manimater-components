@@ -174,3 +174,45 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+def test_validate_params_returns_deep_copied_defaults():
+    dummy = registry.Component(
+        name="test_dummy_mutable_defaults",
+        domain="general",
+        description="test component with mutable default list",
+        params={"items": registry.Param(type="string[]", description="items", default=["a", "b"])},
+        fn=lambda ctx, **kw: None,
+        example={"items": ["x"]},
+    )
+    clean1, errs1 = registry.validate_params(dummy, {})
+    assert not errs1
+    assert clean1["items"] == ["a", "b"]
+
+    clean1["items"].append("c")
+
+    clean2, errs2 = registry.validate_params(dummy, {})
+    assert not errs2
+    assert clean2["items"] == ["a", "b"]
+
+
+
+
+def test_validate_params_deepcopies_defaults():
+    comp = registry.Component(
+        name="test_default_copy",
+        domain="general",
+        description="test",
+        params={"items": registry.Param(type="string[]", description="items", default=["a", "b"])},
+        fn=lambda ctx, **kw: None,
+        example={"items": ["a", "b"]},
+    )
+    clean1, errs1 = registry.validate_params(comp, {})
+    assert not errs1
+    assert clean1["items"] == ["a", "b"]
+    clean1["items"].append("corrupted")
+
+    clean2, errs2 = registry.validate_params(comp, {})
+    assert not errs2
+    assert clean2["items"] == ["a", "b"]
+    assert comp.params["items"].default == ["a", "b"]
