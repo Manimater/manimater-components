@@ -33,7 +33,8 @@ class PreviewScene(Scene):
     def construct(self) -> None:
         load_all()
         comp = registry.get(os.environ["MANIMATER_COMPONENT"])
-        params = json.loads(os.environ.get("MANIMATER_PARAMS") or "null") or comp.example
+        loaded = json.loads(os.environ.get("MANIMATER_PARAMS") or "null")
+        params = comp.example if loaded is None else loaded
         clean, errors = registry.validate_params(comp, params)
         if errors:
             raise SystemExit("invalid params: " + "; ".join(errors))
@@ -49,7 +50,7 @@ def render(name: str, params: dict | None = None, seconds: float = 8.0, quality:
         raise SystemExit(f"unknown component {name!r}. Run with --list to see them all.")
     out.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "MANIMATER_COMPONENT": name, "MANIMATER_SECONDS": str(seconds),
-           "MANIMATER_PARAMS": json.dumps(params) if params else "",
+           "MANIMATER_PARAMS": json.dumps(params) if params is not None else "",
            "PYTHONPATH": os.pathsep.join(filter(None, [str(Path(__file__).resolve().parents[1]), os.environ.get("PYTHONPATH", "")]))}
     with tempfile.TemporaryDirectory() as tmp:
         cmd = [sys.executable, "-m", "manim", "render", QUALITY_FLAGS[quality], "--media_dir", tmp, "-o", name,
@@ -81,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         for c in registry.all_components():
             print(f"{c.name:28} {c.domain:18} {c.description}")
         return 0
-    print(render(args.name, json.loads(args.params) if args.params else None, args.seconds, args.quality, args.out))
+    print(render(args.name, json.loads(args.params) if args.params is not None else None, args.seconds, args.quality, args.out))
     return 0
 
 
