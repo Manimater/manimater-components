@@ -68,15 +68,19 @@ def check_tests(src: str) -> list[str]:
     return errs
 
 
+def declared_components(tree: ast.AST) -> list[str]:
+    """Names given to ``@component(...)``, positionally or as ``name=``. Read from the syntax tree."""
+    names = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "component":
+            arg = node.args[0] if node.args else next((k.value for k in node.keywords if k.arg == "name"), None)
+            names.append(arg.value if isinstance(arg, ast.Constant) and isinstance(arg.value, str) else "<not a plain string>")
+    return names
+
+
 def declared_names(src: str) -> list[str]:
-    """Names passed as the first argument of @component(...), read from the syntax tree."""
-    out = []
-    for node in ast.walk(ast.parse(src)):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "component" and node.args:
-            a = node.args[0]
-            if isinstance(a, ast.Constant) and isinstance(a.value, str):
-                out.append(a.value)
-    return out
+    """Read component names from Python source."""
+    return declared_components(ast.parse(src))
 
 
 def process(body: str) -> dict:

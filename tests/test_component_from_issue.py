@@ -68,3 +68,23 @@ def test_names_must_be_valid_and_unused(root):
 def test_bad_tests_are_rejected(root):
     r = cfi.process(form(tests="```python\nimport subprocess\n```"))
     assert not r["ok"] and any("subprocess" in e for e in r["errors"])
+
+
+@pytest.mark.parametrize(("src", "expected"), [
+    ('@component("demo_thing")\ndef demo(): pass',
+     ["demo_thing"]),
+    ('@component(name="demo_thing")\ndef demo(): pass',
+     ["demo_thing"]),
+    ('@component("first")\ndef first(): pass\n'
+     '@component(name="second")\ndef second(): pass',
+     ["first", "second"]),
+    ('@component(123)\ndef demo(): pass',
+     ["<not a plain string>"]),
+    ('@component(name=123)\ndef demo(): pass',
+     ["<not a plain string>"]),
+    ('@component("demo_thing")\ndef demo(): pass\n'
+     '@component(name=123)\ndef second(): pass',
+     ["demo_thing", "<not a plain string>"]),
+])
+def test_declared_names(src, expected):
+    assert cfi.declared_names(src) == expected

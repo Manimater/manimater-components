@@ -44,14 +44,7 @@ _safety = _load(COMMUNITY / "_safety.py", "_safety")  # loaded by path: importin
 _issue = _load(ROOT / "scripts/component_from_issue.py", "_component_from_issue")
 
 
-def declared_components(tree: ast.AST) -> list[str]:
-    """Names given to ``@component(...)``, positionally or as ``name=``. Read from the syntax tree."""
-    names = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "component":
-            arg = node.args[0] if node.args else next((k.value for k in node.keywords if k.arg == "name"), None)
-            names.append(arg.value if isinstance(arg, ast.Constant) and isinstance(arg.value, str) else "<not a plain string>")
-    return names
+declared_components = _issue.declared_components
 
 
 def check_component_file(path: Path) -> list[str]:
