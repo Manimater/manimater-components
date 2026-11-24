@@ -40,10 +40,20 @@ def title_card(ctx: Ctx, title: str, subtitle: str = "") -> None:
         ctx.play(FadeIn(g[2], shift=UP * 0.2), run_time=0.8)
 
 
+def _item_count(minimum: int, maximum: int, noun: str):
+    def check(value: list | None) -> str | None:
+        n = len(value or [])
+        if minimum <= n <= maximum:
+            return None
+        return f"use {minimum} to {maximum} {noun}; got {n}"
+    return check
+
+
 @component(
     "bullet_points", "A heading with up to 6 key points revealed one by one. Good for lists of facts or steps.",
     {"heading": P("string", "Slide heading", required=True),
-     "points": P("string[]", "3-6 short points (under 70 characters each)", required=True)},
+     "points": P("string[]", "3-6 short points (under 70 characters each)", required=True,
+                 validator=_item_count(3, 6, "points"))},
     {"heading": "Main parts", "points": ["Stator carries the 3-phase winding", "Rotor carries the DC field", "Air gap links them"]},
 )
 def bullet_points(ctx: Ctx, heading: str, points: list[str]) -> None:
@@ -139,7 +149,8 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
 
 @component(
     "flowchart", "A chain of 2-8 labelled boxes connected by arrows (process, signal path, cause and effect).",
-    {"steps": P("string[]", "Box labels in order, under 30 characters each", required=True),
+    {"steps": P("string[]", "Box labels in order, under 30 characters each", required=True,
+                validator=_item_count(2, 8, "steps")),
      "title": P("string", "Chart title", default="")},
     {"steps": ["AC supply", "Rotating field", "Rotor locks on", "Shaft torque"], "title": "How it runs"},
 )
@@ -230,8 +241,8 @@ def callout(ctx: Ctx, text: str, kind: str = "takeaway") -> None:
 @component(
     "bar_chart", "A simple bar chart comparing 2-8 values.",
     {"title": P("string", "Chart title", default=""),
-     "labels": P("string[]", "Category names", required=True),
-     "values": P("number[]", "One number per label", required=True),
+     "labels": P("string[]", "Category names", required=True, validator=_item_count(2, 8, "labels")),
+     "values": P("number[]", "One number per label", required=True, validator=_item_count(2, 8, "values")),
      "unit": P("string", "Unit shown after each value, e.g. 'rpm'", default="")},
     {"title": "Synchronous speed at 50 Hz", "labels": ["2 poles", "4 poles", "6 poles"], "values": [3000, 1500, 1000], "unit": "rpm"},
 )
