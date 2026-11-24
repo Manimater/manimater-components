@@ -4,7 +4,7 @@ from __future__ import annotations
 import shutil
 import textwrap
 
-from manim import DOWN, LEFT, ORIGIN, Mobject, Scene, Text, UP, VGroup
+from manim import DOWN, LEFT, ORIGIN, RIGHT, Mobject, Scene, Text, UP, VGroup
 
 from . import theme
 
@@ -26,11 +26,14 @@ def wrap(text: str, width: int) -> str:
 
 def label(text: str, size: int = 28, color: str = theme.FG, width: int | None = None, align: str = "center", **kw) -> Mobject:
     """Text with optional word-wrap. Multi-line text is built line by line so it can be centred (Manim's Text is left-aligned)."""
+    if align not in ("left", "center", "right"):
+        raise ValueError(f"invalid align {align!r}, expected 'left', 'center', or 'right'")
     s = wrap(text, width) if width else text
     if "\n" not in s:
         return Text(s, font_size=size, color=color, **kw)
+    aligned_edge = LEFT if align == "left" else (RIGHT if align == "right" else ORIGIN)
     lines = [Text(line, font_size=size, color=color, **kw) for line in s.split("\n")]
-    return VGroup(*lines).arrange(DOWN, buff=size * 0.004, aligned_edge=LEFT if align == "left" else ORIGIN)
+    return VGroup(*lines).arrange(DOWN, buff=size * 0.004, aligned_edge=aligned_edge)
 
 
 class Ctx:
@@ -71,7 +74,7 @@ class Ctx:
         mob.move_to(center)
         return mob
 
-    def heading(self, text: str) -> Text:
+    def heading(self, text: str) -> Mobject:
         h = label(text, 36, theme.ACCENT, width=60, weight="BOLD")
         h.move_to((0, 3.35, 0))
         if h.width > STAGE_W:
