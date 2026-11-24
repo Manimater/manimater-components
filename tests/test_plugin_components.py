@@ -18,7 +18,7 @@ from manimate.components.chemistry import (
 from manimate.components.circuits import _elements_ok as _circuit_ok, _slots, parse_elements
 from manimate.components.databases import _cell, _ops_ok, _split_row
 from manimate.components.datastructures import (
-    build_bst, parse_edges, parse_stack_ops, sort_steps, traversal_order, walk,
+    build_bst, parse_edges, parse_stack_ops, resolve_start, sort_steps, traversal_order, unreached_nodes, walk,
 )
 
 load_all()
@@ -58,6 +58,13 @@ def test_stack_ops_parse_and_reject():
 
 def test_traversals():
     adj = parse_edges(["A-B", "A-C", "B-D", "C-D", "D-E"])
+    assert resolve_start(adj, "a") == "A"
+    assert resolve_start(adj, "A") == "A"
+    with pytest.raises(ValueError, match="not in edges"):
+        resolve_start(adj, "Z")
+    disconnected = parse_edges(["A-B", "C-D"])
+    assert unreached_nodes(disconnected, traversal_order(disconnected, "A", "bfs")) == ["C", "D"]
+
     assert [n for n, _ in traversal_order(adj, "A", "bfs")] == ["A", "B", "C", "D", "E"]
     assert [n for n, _ in traversal_order(adj, "A", "dfs")] == ["A", "B", "D", "C", "E"]
     # every node except the start is reached from a node that was already visited
