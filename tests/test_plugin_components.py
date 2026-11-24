@@ -18,7 +18,7 @@ from manimate.components.chemistry import (
 from manimate.components.circuits import _elements_ok as _circuit_ok, _slots, parse_elements
 from manimate.components.databases import _cell, _ops_ok, _split_row
 from manimate.components.datastructures import (
-    build_bst, parse_edges, parse_stack_ops, sort_steps, traversal_order, walk,
+    bst_layout, build_bst, parse_edges, parse_stack_ops, sort_steps, traversal_order, walk,
 )
 
 load_all()
@@ -58,6 +58,12 @@ def test_stack_ops_parse_and_reject():
 
 def test_traversals():
     adj = parse_edges(["A-B", "A-C", "B-D", "C-D", "D-E"])
+    sorted_tree = build_bst(list(range(1, 9)))
+    layout, children = bst_layout(sorted_tree)
+    assert len(layout) == 8 and len(children) == 8
+    assert max(abs(y) for _, y in layout.values()) <= 3.3 + 1e-9
+    assert layout[str(1)][0] < layout[str(8)][0]
+
     assert [n for n, _ in traversal_order(adj, "A", "bfs")] == ["A", "B", "C", "D", "E"]
     assert [n for n, _ in traversal_order(adj, "A", "dfs")] == ["A", "B", "D", "C", "E"]
     # every node except the start is reached from a node that was already visited

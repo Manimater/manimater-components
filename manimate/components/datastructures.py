@@ -304,6 +304,43 @@ def _bst_values_ok(v: list) -> str | None:
     return None
 
 
+def bst_layout(root: _Node) -> tuple[dict[str, tuple[float, float]], dict[str, list[str]]]:
+    """In-order x positions and adaptive depth spacing, plus the child map.
+
+    ``dy`` shrinks for a deep tree (the sorted-insertion worst case) so the
+    whole tree stays near its natural size instead of being scaled down by
+    ``fit`` to a fifth.
+    """
+    def depth(node: _Node | None) -> int:
+        if node is None:
+            return 0
+        return 1 + max(depth(node.left), depth(node.right))
+
+    max_depth = max(1, depth(root) - 1)
+    dy = min(1.4, 3.3 / max_depth)
+    positions: dict[str, tuple[float, float]] = {}
+    children: dict[str, list[str]] = {}
+
+    def place(node: _Node | None, level: int, counter: list[int]) -> None:
+        if node is None:
+            return
+        place(node.left, level + 1, counter)
+        positions[str(node.key)] = (counter[0] * 1.3, -level * dy)
+        counter[0] += 1
+        place(node.right, level + 1, counter)
+
+    def link(node: _Node | None) -> None:
+        if node is None:
+            return
+        children[str(node.key)] = [str(c.key) for c in (node.left, node.right) if c is not None]
+        link(node.left)
+        link(node.right)
+
+    place(root, 0, [0])
+    link(root)
+    return positions, children
+
+
 @component(
     "binary_search_tree",
     "Binary search tree from inserted values, optionally traversed.",
@@ -319,26 +356,8 @@ def binary_search_tree(ctx: Ctx, values: list[float] | None = None, traversal: s
     root = build_bst([int(v) for v in (values or [8, 3, 10, 1, 6, 14])])
     # Own layout: x from the in-order position, y from the depth. The plugin's MTree layout puts an only child
     # straight under its parent, which would hide whether it is a left or a right child.
-    positions: dict[str, np.ndarray] = {}
-    children: dict[str, list[str]] = {}
-
-    def place(node: _Node | None, depth: int, counter: list[int]) -> None:
-        if node is None:
-            return
-        place(node.left, depth + 1, counter)
-        positions[str(node.key)] = np.array([counter[0] * 1.3, -depth * 1.4, 0.0])
-        counter[0] += 1
-        place(node.right, depth + 1, counter)
-
-    def link(node: _Node | None) -> None:
-        if node is None:
-            return
-        children[str(node.key)] = [str(c.key) for c in (node.left, node.right) if c is not None]
-        link(node.left)
-        link(node.right)
-
-    place(root, 0, [0])
-    link(root)
+    layout, children = bst_layout(root)
+    positions = {key: np.array([x, y, 0.0]) for key, (x, y) in layout.items()}
     tree = dsa.MGraph(children, nodes_position=positions)
     fit(tree, max_w=10.0, max_h=3.9, center=(0, _CY - 0.1, 0), max_scale=1.2)
     head = ctx.heading("Binary search tree")
