@@ -70,7 +70,7 @@ python -m manimate.preview my_component         # look at it
 python -m manimate.preview my_component --params '{"steps": ["a"]}'     # try awkward input
 python scripts/check_community.py              # fast static rules (what CI runs first)
 python -m pytest tests/community                # generic checks run on every community component
-python -m manimate.catalog > catalog.json && python scripts/gen_docs.py   # CI fails if these are stale
+python -m manimate.catalog --out catalog.json && python scripts/gen_docs.py   # CI fails if these are stale
 ```
 
 Put the logic tests in `tests/community/test_my_component.py`. Test edge cases: empty, one item, the maximum, long labels.

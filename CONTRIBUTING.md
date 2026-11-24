@@ -28,7 +28,7 @@ automatically. A pull request is not reviewed until **both required checks are g
    cases (empty, one item, the maximum, long labels).
 5. **Fill in the pull request description.** The template asks the five design questions and has a checklist. Every box
    must be ticked (once it is true) before the check passes.
-6. **No generated files left behind.** Run `python -m manimate.catalog > catalog.json` and `python scripts/gen_docs.py`
+6. **No generated files left behind.** Run `python -m manimate.catalog --out catalog.json` and `python scripts/gen_docs.py`
    and commit the result. CI regenerates both and fails on any difference.
 7. **No binaries, media, secrets or files over 1 MB.** Previews are rendered by CI; do not commit videos. Images for the
    README go in `assets/`.
@@ -58,7 +58,7 @@ manimate-preview my_component      # watch it: previews/my_component.mp4
 # 4. Check it exactly as CI will
 python scripts/check_community.py  # fast static rules, nothing is run
 python -m pytest                   # includes a dry run of every component
-manimate-catalog > catalog.json && python scripts/gen_docs.py
+manimate-catalog --out catalog.json && python scripts/gen_docs.py
 
 # 5. Push the component branch and open the pull request
 git add manimate/components/community/my_component.py tests/community/test_my_component.py catalog.json docs skills
