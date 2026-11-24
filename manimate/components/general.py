@@ -101,6 +101,25 @@ def equation(ctx: Ctx, latex: str, title: str = "", terms: list[str] | None = No
                  run_time=max(1.0, min(3.0, ctx.remaining - 0.5)))
 
 
+def axis_ticks(lo: float, hi: float, step: float) -> list[float]:
+    """Tick values from ``lo`` to ``hi`` at ``step``, rounded to kill float drift."""
+    if step <= 0 or hi < lo:
+        return []
+    value = math.ceil(lo / step - 1e-9) * step
+    ticks = []
+    while value <= hi + step * 1e-9:
+        ticks.append(round(value, 10))
+        value += step
+    return ticks
+
+
+def format_tick(value: float, step: float) -> str:
+    """A tick label with as many decimals as the step needs: 0.5 -> '0.5', 2 -> '2'."""
+    decimals = max(0, -math.floor(math.log10(step))) if step else 0
+    text = f"{value:.{decimals}f}"
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
 @component(
     "function_plot", "Plots y = f(x) on labelled axes. Expression may use x, pi, e; sin, cos, tan, asin, acos, atan; "
     "sinh, cosh, tanh; exp, log, ln, log10, log2, sqrt, abs, floor, ceil; and + - * / % ^ (or **).",
@@ -125,6 +144,19 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
                 x_axis_config={"decimal_number_config": {"num_decimal_places": dec(xs)}},
                 y_axis_config={"decimal_number_config": {"num_decimal_places": dec(ys)}},
                 ).move_to((0, 0.1, 0))
+    # Manim's own number labels need LaTeX. Without it, draw the tick values
+    # with Text so the scale is still readable.
+    if HAS_LATEX:
+        x_ticks = y_ticks = VGroup()
+    else:
+        x_ticks = VGroup(*[
+            Text(format_tick(v, xs), font_size=18, color=theme.MUTED).next_to(axes.c2p(v, 0), DOWN, buff=0.12)
+            for v in axis_ticks(x_min, x_max, xs) if abs(v) > 1e-9
+        ])
+        y_ticks = VGroup(*[
+            Text(format_tick(v, ys), font_size=18, color=theme.MUTED).next_to(axes.c2p(0, v), LEFT, buff=0.12)
+            for v in axis_ticks(y_min, y_max, ys) if abs(v) > 1e-9
+        ])
     curve = axes.plot(f, color=theme.ACCENT, stroke_width=5, use_smoothing=False,
                       x_range=[x_min, x_max, (x_max - x_min) / 300])
     xl = axes.get_x_axis_label(Text(x_label, font_size=24, color=theme.MUTED), edge=RIGHT, direction=DOWN, buff=0.3)
@@ -132,7 +164,7 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
     expr = Text(f"y = {expression}", font_size=26, color=theme.YELLOW).to_edge(DOWN, buff=1.5)
     if title:
         ctx.play(Write(ctx.heading(title)), run_time=0.7)
-    ctx.play(Create(axes), FadeIn(xl), FadeIn(yl), run_time=1.0)
+    ctx.play(Create(axes), FadeIn(xl), FadeIn(yl), FadeIn(x_ticks), FadeIn(y_ticks), run_time=1.0)
     ctx.play(Create(curve), run_time=max(1.5, min(4.0, ctx.remaining - 1.0)))
     ctx.play(FadeIn(expr), run_time=0.5)
 
