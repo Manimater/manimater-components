@@ -38,6 +38,22 @@ def test_parse_form_and_unfence():
     assert cfi.parse_form(form(tests="_No response_"))["Test code (optional)"] == ""
 
 
+def test_hash_headings_inside_a_code_fence_stay_in_the_code(root):
+    code = TEMPLATE.replace("step_chain", "pipeline_steps") + "\n### Helpers\ndef helper():\n    return 1\n#### Deeper\n"
+    r = cfi.process(form(code=code))
+
+    assert r["ok"], r["errors"]
+    written = (root / "manimate/components/community/pipeline_steps.py").read_text()
+    assert "### Helpers" in written and "#### Deeper" in written
+
+
+def test_an_unclosed_code_fence_is_reported():
+    body = "### Component name\n\npipeline_steps\n\n### Python code\n\n```python\nx = 1\n"
+    r = cfi.process(body)
+    assert not r["ok"]
+    assert any("never closed" in e for e in r["errors"])
+
+
 def test_a_good_submission_writes_the_files(root):
     r = cfi.process(form(tests="```python\ndef test_x():\n    assert 1\n```"))
     assert r["ok"], r["errors"]
