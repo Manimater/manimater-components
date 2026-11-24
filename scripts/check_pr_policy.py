@@ -166,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--author", default="")
     ap.add_argument("--labels", default="", help="comma-separated")
     a = ap.parse_args(argv)
-    body = Path(a.body_file).read_text() if a.body_file and Path(a.body_file).exists() else ""
+    body = Path(a.body_file).read_text(encoding="utf-8") if a.body_file and Path(a.body_file).exists() else ""
     changes, sizes = collect(a.base, a.head)
     errors = evaluate(head_ref=a.head_ref, title=a.title, body=body, author=a.author, changes=changes, sizes=sizes,
                       labels=tuple(x.strip() for x in a.labels.split(",") if x.strip()))

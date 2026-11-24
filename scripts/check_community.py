@@ -55,7 +55,7 @@ def declared_components(tree: ast.AST) -> list[str]:
 
 
 def check_component_file(path: Path) -> list[str]:
-    stem, src = path.stem, path.read_text()
+    stem, src = path.stem, path.read_text(encoding="utf-8")
     problems: list[str] = []
     if not NAME_RE.match(stem):
         problems.append(f"file name {path.name!r} must be snake_case: a lowercase letter first, then lowercase letters, digits or _ (3 to 41 characters)")
@@ -80,7 +80,7 @@ def check_component_file(path: Path) -> list[str]:
         problems.append(f"the component is named {declared[0]!r} but the file is {path.name!r}. They must match")
     test = TESTS / f"test_{stem}.py"
     if test.exists():
-        problems += _issue.check_tests(test.read_text())
+        problems += _issue.check_tests(test.read_text(encoding="utf-8"))
     return problems
 
 
