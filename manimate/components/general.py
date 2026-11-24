@@ -9,7 +9,7 @@ from manim import (
 )
 
 from .. import theme
-from ..ctx import HAS_LATEX, Ctx, label, wrap
+from ..ctx import HAS_LATEX, STAGE_W, Ctx, label, wrap
 from ..tex import normalize_tex, tex_to_plain
 from ..registry import Param as P, component
 from ..safe_expr import compile_expr, validate_expr
@@ -130,6 +130,9 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
     xl = axes.get_x_axis_label(Text(x_label, font_size=24, color=theme.MUTED), edge=RIGHT, direction=DOWN, buff=0.3)
     yl = axes.get_y_axis_label(Text(y_label, font_size=24, color=theme.MUTED), edge=UP, direction=LEFT, buff=0.3)
     expr = Text(f"y = {expression}", font_size=26, color=theme.YELLOW).to_edge(DOWN, buff=1.5)
+    # A 120-character expression can run past the frame; keep the whole caption inside the stage.
+    if expr.width > STAGE_W - 0.4:
+        expr.scale_to_fit_width(STAGE_W - 0.4)
     if title:
         ctx.play(Write(ctx.heading(title)), run_time=0.7)
     ctx.play(Create(axes), FadeIn(xl), FadeIn(yl), run_time=1.0)
