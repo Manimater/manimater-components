@@ -10,6 +10,7 @@ With no ``--params`` the component's own ``example`` is used. The video lands in
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 import shutil
@@ -33,7 +34,7 @@ class PreviewScene(Scene):
     def construct(self) -> None:
         load_all()
         comp = registry.get(os.environ["MANIMATER_COMPONENT"])
-        params = json.loads(os.environ.get("MANIMATER_PARAMS") or "null") or comp.example
+        params = json.loads(os.environ.get("MANIMATER_PARAMS") or "null") or copy.deepcopy(comp.example)
         clean, errors = registry.validate_params(comp, params)
         if errors:
             raise SystemExit("invalid params: " + "; ".join(errors))
