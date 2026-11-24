@@ -1,6 +1,7 @@
 """The issue-to-pull-request bot's parser and static checks (it must never run submitted code)."""
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import pathlib
@@ -36,6 +37,15 @@ def test_parse_form_and_unfence():
     assert s["Component name"] == "pipeline_steps"
     assert cfi.unfence(s["Python code"]).startswith('"""TEMPLATE')
     assert cfi.parse_form(form(tests="_No response_"))["Test code (optional)"] == ""
+
+
+def test_declared_components_reads_positional_and_keyword_names():
+    tree = ast.parse('@component(name="demo_thing")\ndef f():\n    pass\n')
+    assert cfi.declared_components(tree) == ["demo_thing"]
+    tree = ast.parse('@component("first")\n@component("second")\ndef f():\n    pass\n')
+    assert cfi.declared_components(tree) == ["first", "second"]
+    tree = ast.parse('@component(name=1)\ndef f():\n    pass\n')
+    assert cfi.declared_components(tree) == ["<not a plain string>"]
 
 
 def test_a_good_submission_writes_the_files(root):
