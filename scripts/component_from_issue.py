@@ -29,12 +29,40 @@ TEST_ALLOWED = _safety.ALLOWED_IMPORTS | {"pytest", "manimate"}
 
 
 def parse_form(body: str) -> dict[str, str]:
-    """Split a GitHub issue-form body ("### Label\\n\\nvalue" sections) into {label: value}."""
+    """Split a GitHub issue-form body ("### Label\n\nvalue" sections) into {label: value}.
+
+    A line starting with ``###`` inside a fenced code block is code, not a
+    section label: LLM-written Python often uses ``### Helpers`` banners. A
+    fence that never closes is reported in ``__parse_error__``.
+    """
     sections: dict[str, str] = {}
-    parts = re.split(r"^### +(.+?)\s*$", body.replace("\r\n", "\n"), flags=re.M)
-    for label, value in zip(parts[1::2], parts[2::2]):
-        value = value.strip()
-        sections[label.strip()] = "" if value == "_No response_" else value
+    label = None
+    buffer: list[str] = []
+    in_fence = False
+
+    def flush() -> None:
+        if label is None:
+            return
+        value = "\n".join(buffer).strip()
+        sections[label] = "" if value == "_No response_" else value
+
+    for line in body.replace("\r\n", "\n").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            if label is not None:
+                buffer.append(line)
+            continue
+        match = None if in_fence else re.match(r"^### +(.+?)\s*$", line)
+        if match:
+            flush()
+            label = match.group(1).strip()
+            buffer = []
+        elif label is not None:
+            buffer.append(line)
+    flush()
+    if in_fence:
+        sections["__parse_error__"] = "A code fence was opened but never closed."
     return sections
 
 
@@ -85,6 +113,8 @@ def process(body: str) -> dict:
     code = unfence(find(sections, "python code")) if find(sections, "python code") else ""
     tests = unfence(find(sections, "test code")) if find(sections, "test code") else ""
     errors: list[str] = []
+    if sections.pop("__parse_error__", ""):
+        errors.append("A code fence was opened but never closed. Check the Python or test block.")
 
     if not NAME_RE.match(name):
         errors.append(f"The component name {name!r} must be lowercase letters, digits and underscores, starting with a letter (3 to 41 characters).")
