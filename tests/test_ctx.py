@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
 import pytest
-from manim import Rectangle
+from manim import Mobject, Rectangle
 
 from manimate.ctx import Ctx, STAGE_CENTER, label, wrap
 
@@ -78,3 +78,24 @@ def test_fit_shrinks_only_as_needed_and_centers(width, height):
     assert rectangle.width == pytest.approx(width * factor)
     assert rectangle.height == pytest.approx(height * factor)
     assert rectangle.get_center() == pytest.approx(STAGE_CENTER)
+
+
+def test_label_align_right():
+    result = label("short\nlonger line", align="right")
+    assert result[0].get_right()[0] == pytest.approx(result[1].get_right()[0])
+
+
+def test_label_align_left():
+    result = label("short\nlonger line", align="left")
+    assert result[0].get_left()[0] == pytest.approx(result[1].get_left()[0])
+
+
+def test_label_invalid_align_raises_value_error():
+    with pytest.raises(ValueError, match="invalid align 'invalid'"):
+        label("hello", align="invalid")
+
+
+def test_ctx_heading_returns_mobject():
+    ctx = Ctx(Mock(), duration=1)
+    h = ctx.heading("A very long heading that wraps onto multiple lines to ensure a VGroup is produced")
+    assert isinstance(h, Mobject)
