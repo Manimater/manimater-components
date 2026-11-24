@@ -15,17 +15,28 @@ ALLOWED_IMPORTS = {
 ALLOWED_LIBRARY = {"ctx", "theme", "registry", "tex", "safe_expr", "viz", "plugins", "components"}
 BANNED_CALLS = {"eval", "exec", "compile", "open", "__import__", "globals", "locals", "vars", "breakpoint", "input",
                 "exit", "quit", "setattr", "delattr", "getattr"}
-BANNED_ATTRS = {"system", "popen", "spawn", "fork", "remove", "rmtree", "unlink", "environ", "getenv",
+BANNED_ATTRS = {"popen", "spawn", "fork", "rmtree", "unlink", "environ", "getenv",
                 # file and network access that the allowed imports (numpy, pathlib-like helpers) would otherwise give
-                "load", "loadtxt", "genfromtxt", "fromfile", "tofile", "memmap", "save", "savez", "savez_compressed",
+                "loadtxt", "genfromtxt", "fromfile", "tofile", "memmap", "savez", "savez_compressed",
                 "savetxt", "ctypeslib", "read_text", "read_bytes", "write_text", "write_bytes", "urlopen", "urlretrieve",
                 "Popen", "check_output", "startfile"}
+# Harmless on a list, group or domain object (``group.remove(m)``, ``motor.load``), dangerous on a module
+# that touches the host. Only these attribute names are judged by their receiver.
+CONTEXTUAL_ATTRS = {"system", "remove", "load", "save"}
+DANGEROUS_ROOTS = {"os", "subprocess", "shutil", "sys", "np", "numpy", "pathlib", "builtins"}
 # Manim names that read files or change global settings. Components draw from parameters; they never load assets.
 BANNED_NAMES = {"ImageMobject", "SVGMobject", "VideoMobject", "config", "tempconfig", "__builtins__", "__file__",
                 "__loader__", "__spec__"}
 # Reached through ``import manim; manim.config`` or ``from manim import config as c`` these are just as dangerous.
 BANNED_MANIM = BANNED_NAMES - {"__builtins__", "__file__", "__loader__", "__spec__"}
 BANNED_KEYWORDS = {"code_file", "file_name", "filename", "image_filename"}
+
+
+def _root_name(node: ast.AST) -> str:
+    """The left-most name in an attribute chain: ``np.os.system`` -> ``np``."""
+    while isinstance(node, ast.Attribute):
+        node = node.value
+    return node.id if isinstance(node, ast.Name) else ""
 
 
 def check_source(source: str) -> list[str]:
@@ -57,7 +68,8 @@ def check_source(source: str) -> list[str]:
         elif isinstance(node, ast.Attribute):
             if node.attr.startswith("__") and node.attr.endswith("__") and node.attr not in {"__name__", "__doc__"}:
                 problems.append(f"line {node.lineno}: access to {node.attr} is not allowed")
-            elif node.attr in BANNED_ATTRS or node.attr in BANNED_MANIM:
+            elif (node.attr in BANNED_ATTRS or node.attr in BANNED_MANIM
+                  or (node.attr in CONTEXTUAL_ATTRS and _root_name(node.value) in DANGEROUS_ROOTS)):
                 problems.append(f"line {node.lineno}: .{node.attr} is not allowed")
         elif isinstance(node, ast.Name) and node.id in BANNED_NAMES:
             problems.append(f"line {node.lineno}: {node.id} is not allowed (components cannot load files or change Manim's settings)")

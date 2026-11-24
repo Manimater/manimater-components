@@ -185,6 +185,23 @@ def parse_edges(edges: list[str]) -> dict[str, list[str]]:
     return {k: sorted(v) for k, v in adj.items()}
 
 
+def resolve_start(adj: dict[str, list[str]], start: str) -> str:
+    """The node's own spelling, matching case-insensitively, or a clear error."""
+    if start in adj:
+        return start
+    folded = {node.lower(): node for node in adj}
+    if start.lower() in folded:
+        return folded[start.lower()]
+    options = ", ".join(sorted(adj))
+    raise ValueError(f"start node {start!r} is not in edges; use one of: {options}")
+
+
+def unreached_nodes(adj: dict[str, list[str]], order: list[tuple[str, str | None]]) -> list[str]:
+    """Nodes the traversal never visited, sorted."""
+    seen = {node for node, _ in order}
+    return sorted(node for node in adj if node not in seen)
+
+
 def traversal_order(adj: dict[str, list[str]], start: str, algorithm: str) -> list[tuple[str, str | None]]:
     """Visit order as (node, node it was reached from), for BFS or DFS, neighbours in sorted order."""
     seen, order = {start}, [(start, None)]
@@ -233,8 +250,7 @@ def _edges_ok(v: list) -> str | None:
 def graph_traversal(ctx: Ctx, edges: list[str] | None = None, start: str = "A", algorithm: str = "bfs") -> None:
     dsa = require("manim_dsa", _PIP)
     adj = parse_edges(edges or ["A-B", "A-C", "B-D", "C-D", "D-E"])
-    if start not in adj:
-        start = sorted(adj)[0]
+    start = resolve_start(adj, start)
     order = traversal_order(adj, start, algorithm)
     undirected_once = {u: [v for v in nbrs if u < v] for u, nbrs in adj.items()}
     # The plugin's default layout needs scipy and collapses small graphs, so nodes go on a circle instead. Its edges
@@ -261,6 +277,9 @@ def graph_traversal(ctx: Ctx, edges: list[str] | None = None, start: str = "A", 
                 anims.append(graph.edges[key].animate.highlight(theme.GOOD))
         new_text = label("Visited: " + "  ".join(names), 28, theme.FG).move_to((0, -2.45, 0))
         ctx.play(*anims, Transform(seen_text, new_text), run_time=t)
+    left = unreached_nodes(adj, order)
+    if left:
+        ctx.play(FadeIn(label("Not reached: " + ", ".join(left), 24, theme.MUTED).move_to((0, -2.85, 0))), run_time=0.6)
     ctx.wait(ctx.remaining)
 
 
