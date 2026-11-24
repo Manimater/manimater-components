@@ -102,6 +102,20 @@ def test_safety_check_blocks_aliases_and_attributes(src):
     assert check_source(src), f"should have been blocked: {src!r}"
 
 
+def test_safety_check_allows_harmless_domain_attributes():
+    assert check_source("def f(group, m):\n    group.remove(m)\n") == []
+    assert check_source("def f(x):\n    return x.save\n") == []
+    assert check_source("def f(motor):\n    return motor.load\n") == []
+    assert check_source("def f(ctx):\n    return ctx.system\n") == []
+
+
+def test_safety_check_still_blocks_host_attributes_on_modules():
+    assert check_source("import numpy as np\nnp.load('/etc/passwd')\n")
+    assert check_source("import numpy as np\nnp.save('x.npy', [1])\n")
+    assert check_source("import os\nos.remove('/tmp/x')\n")          # os is not an allowed import either
+    assert check_source("import shutil\nshutil.rmtree('/tmp/x')\n")
+
+
 def test_safety_check_only_blocks_using_a_banned_builtin_not_assigning_the_name():
     assert check_source("input = 3\n") == []                      # assigning is harmless
     assert check_source("input = 3\nprint_me = input\n")           # but reading it back is the builtin's name: rename it
