@@ -111,6 +111,24 @@ def test_binaries_secrets_and_big_files():
     assert "assets/gifs/new.gif" not in text and "catalog.json" not in text
 
 
+@pytest.mark.parametrize("path", [
+    "recording.mp3", "voice.wav", "clip.mkv", "image.webp", "photo.heic", "archive.7z", "lib.dylib",
+    "model.onnx", "weights.h5", "arrays.npy", "pickled.pkl", "paper.pdf",
+])
+def test_more_binary_and_model_types_are_rejected(path):
+    assert any(path in e for e in pol.evaluate(head_ref="fix/x", title="fix: tidy things up", body=BODY, author="x",
+                                               changes=[("A", path)]))
+
+
+@pytest.mark.parametrize("path", [
+    ".env.local", ".env.production", "id_ecdsa", "id_dsa", "credentials.json", ".netrc",
+    ".git-credentials", "cert.pfx", "auth.p8", "release.keystore",
+])
+def test_more_secret_names_are_rejected(path):
+    assert any(path in e for e in pol.evaluate(head_ref="fix/x", title="fix: tidy things up", body=BODY, author="x",
+                                               changes=[("A", path)]))
+
+
 def test_maintainer_override_label():
     assert run(head_ref="whatever", title="x", body="", labels=("policy-override",)) == []
 
