@@ -10,6 +10,7 @@ from manim import FadeOut, Scene, tempconfig
 from manimate import registry
 from manimate.components import community, load_all
 from manimate.components.community._safety import check_source
+from types import SimpleNamespace
 from manimate.ctx import Ctx
 
 load_all()
@@ -25,6 +26,30 @@ def _dry_run(comp, params, seconds: float = 6.0) -> None:
         scene = Scene()
         comp.fn(Ctx(scene, seconds), **clean)
         scene.play(*[FadeOut(m) for m in scene.mobjects], run_time=0.5)
+
+
+def test_no_community_module_failed_to_import():
+    assert community.FAILED == {}, community.FAILED
+
+
+def test_one_broken_module_does_not_stop_the_others(monkeypatch):
+    imported = []
+
+    monkeypatch.setattr(community.pkgutil, "iter_modules",
+                        lambda _path: [SimpleNamespace(name="good"), SimpleNamespace(name="broken")])
+    def fake_import(name):
+        imported.append(name)
+        if name.endswith("broken"):
+            raise RuntimeError("boom")
+    monkeypatch.setattr(community.importlib, "import_module", fake_import)
+
+    community.FAILED.clear()
+    try:
+        community.load()
+        assert imported == ["manimate.components.community.good", "manimate.components.community.broken"]
+        assert community.FAILED == {"broken": "RuntimeError: boom"}
+    finally:
+        community.FAILED.clear()
 
 
 def test_underscore_modules_are_not_loaded():
