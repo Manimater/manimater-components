@@ -174,3 +174,75 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+def test_flowchart_and_bar_chart_empty_list_rejected():
+    from manimate.components import general
+
+    # 1. flowchart list length coverage (0, 1, 2, 8, 9 items)
+    comp_fc = registry.get("flowchart")
+    assert comp_fc is not None
+
+    # Empty list (0 items)
+    _, errs_fc_0 = registry.validate_params(comp_fc, {"steps": []})
+    assert any("needs 2 to 8 steps" in e for e in errs_fc_0)
+
+    # Single-item list (1 item)
+    _, errs_fc_1 = registry.validate_params(comp_fc, {"steps": ["Only one"]})
+    assert any("needs 2 to 8 steps" in e for e in errs_fc_1)
+
+    # Valid minimum boundary (2 items)
+    clean_fc_2, errs_fc_2 = registry.validate_params(comp_fc, {"steps": ["Step 1", "Step 2"]})
+    assert not errs_fc_2
+    assert clean_fc_2["steps"] == ["Step 1", "Step 2"]
+
+    # Valid maximum boundary (8 items)
+    steps_8 = [f"Step {i}" for i in range(8)]
+    clean_fc_8, errs_fc_8 = registry.validate_params(comp_fc, {"steps": steps_8})
+    assert not errs_fc_8
+    assert clean_fc_8["steps"] == steps_8
+
+    # Exceeding maximum (9 items)
+    steps_9 = [f"Step {i}" for i in range(9)]
+    _, errs_fc_9 = registry.validate_params(comp_fc, {"steps": steps_9})
+    assert any("too many items (max 8)" in e or "needs 2 to 8 steps" in e for e in errs_fc_9)
+
+    # 2. bar_chart list length coverage (0, 1, 2, 8, 9 items)
+    comp_bc = registry.get("bar_chart")
+    assert comp_bc is not None
+
+    # Empty lists (0 items)
+    _, errs_bc_0 = registry.validate_params(comp_bc, {"labels": [], "values": []})
+    assert any("needs 2 to 8 labels" in e for e in errs_bc_0)
+    assert any("needs 2 to 8 values" in e for e in errs_bc_0)
+
+    # Single-item lists (1 item)
+    _, errs_bc_1 = registry.validate_params(comp_bc, {"labels": ["A"], "values": [10]})
+    assert any("needs 2 to 8 labels" in e for e in errs_bc_1)
+    assert any("needs 2 to 8 values" in e for e in errs_bc_1)
+
+    # Valid minimum boundary (2 items)
+    clean_bc_2, errs_bc_2 = registry.validate_params(comp_bc, {"labels": ["A", "B"], "values": [10, 20]})
+    assert not errs_bc_2
+    assert clean_bc_2["labels"] == ["A", "B"]
+    assert clean_bc_2["values"] == [10, 20]
+
+    # Valid maximum boundary (8 items)
+    labels_8 = [f"L{i}" for i in range(8)]
+    values_8 = [float(i * 10) for i in range(8)]
+    clean_bc_8, errs_bc_8 = registry.validate_params(comp_bc, {"labels": labels_8, "values": values_8})
+    assert not errs_bc_8
+    assert clean_bc_8["labels"] == labels_8
+    assert clean_bc_8["values"] == values_8
+
+    # Exceeding maximum (9 items)
+    labels_9 = [f"L{i}" for i in range(9)]
+    values_9 = [float(i * 10) for i in range(9)]
+    _, errs_bc_9 = registry.validate_params(comp_bc, {"labels": labels_9, "values": values_9})
+    assert any("too many items (max 8)" in e or "needs 2 to 8 labels" in e for e in errs_bc_9)
+    assert any("too many items (max 8)" in e or "needs 2 to 8 values" in e for e in errs_bc_9)
+
+    # 3. Defensive rendering guards verify graceful return on empty lists
+    assert general.flowchart(None, steps=[]) is None
+    assert general.bar_chart(None, labels=[], values=[]) is None
+

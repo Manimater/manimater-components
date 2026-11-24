@@ -137,15 +137,23 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
     ctx.play(FadeIn(expr), run_time=0.5)
 
 
+def _flowchart_steps_ok(v: list) -> str | None:
+    if not 2 <= len(v) <= 8:
+        return "needs 2 to 8 steps"
+    return None
+
+
 @component(
     "flowchart", "A chain of 2-8 labelled boxes connected by arrows (process, signal path, cause and effect).",
-    {"steps": P("string[]", "Box labels in order, under 30 characters each", required=True),
+    {"steps": P("string[]", "Box labels in order, under 30 characters each", required=True, validator=_flowchart_steps_ok),
      "title": P("string", "Chart title", default="")},
     {"steps": ["AC supply", "Rotating field", "Rotor locks on", "Shaft torque"], "title": "How it runs"},
 )
 def flowchart(ctx: Ctx, steps: list[str], title: str = "") -> None:
     steps = steps[:8]
     n = len(steps)
+    if n == 0:
+        return
     cols = min(n, 4)
     rows_n = math.ceil(n / cols)
     dx, dy = 3.5, 2.0
@@ -227,16 +235,30 @@ def callout(ctx: Ctx, text: str, kind: str = "takeaway") -> None:
     ctx.play(Indicate(box, color=color, scale_factor=1.03), run_time=0.8)
 
 
+def _bar_labels_ok(v: list) -> str | None:
+    if not 2 <= len(v) <= 8:
+        return "needs 2 to 8 labels"
+    return None
+
+
+def _bar_values_ok(v: list) -> str | None:
+    if not 2 <= len(v) <= 8:
+        return "needs 2 to 8 values"
+    return None
+
+
 @component(
     "bar_chart", "A simple bar chart comparing 2-8 values.",
     {"title": P("string", "Chart title", default=""),
-     "labels": P("string[]", "Category names", required=True),
-     "values": P("number[]", "One number per label", required=True),
+     "labels": P("string[]", "Category names", required=True, validator=_bar_labels_ok),
+     "values": P("number[]", "One number per label", required=True, validator=_bar_values_ok),
      "unit": P("string", "Unit shown after each value, e.g. 'rpm'", default="")},
     {"title": "Synchronous speed at 50 Hz", "labels": ["2 poles", "4 poles", "6 poles"], "values": [3000, 1500, 1000], "unit": "rpm"},
 )
 def bar_chart(ctx: Ctx, labels: list[str], values: list[float], title: str = "", unit: str = "") -> None:
     n = min(len(labels), len(values), 8)
+    if n == 0:
+        return
     labels, values = labels[:n], [max(0.0, float(v)) for v in values[:n]]
     top = max(values) or 1.0
     base_y, max_h, width = -1.6, 3.8, min(1.3, 10 / max(n, 1) * 0.7)
