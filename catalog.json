@@ -892,6 +892,45 @@
     }
   },
   {
+    "name": "merge_sort",
+    "domain": "computer-science",
+    "description": "Visualize merge sort: divide and conquer recursive splitting into subarrays, followed by step-by-step merging with comparisons highlighted.",
+    "params": {
+      "values": {
+        "type": "number[]",
+        "required": false,
+        "description": "2-8 numbers to sort (whole numbers 0-99)",
+        "default": [
+          38,
+          27,
+          43,
+          3,
+          9,
+          82,
+          10
+        ]
+      },
+      "show_counts": {
+        "type": "boolean",
+        "required": false,
+        "description": "Show running count of comparisons",
+        "default": true
+      }
+    },
+    "example": {
+      "values": [
+        38,
+        27,
+        43,
+        3,
+        9,
+        82,
+        10
+      ],
+      "show_counts": true
+    }
+  },
+  {
     "name": "queue_operations",
     "domain": "computer-science",
     "description": "A queue of capacity 5 starting with 1, 2, 3: enqueue at the back, dequeue from the front (first in, first out).",
@@ -1540,7 +1579,7 @@
       "elements": {
         "type": "string[]",
         "required": true,
-        "description": "e.g. ['battery:12 V', 'resistor:R = 4 Ω', 'capacitor:C']"
+        "description": "e.g. ['battery:12 V', 'resistor:R = 4 \u03a9', 'capacitor:C']"
       },
       "title": {
         "type": "string",
