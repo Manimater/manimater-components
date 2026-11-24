@@ -98,8 +98,8 @@ def normalize_tex(tex: str) -> str:
     s = s.strip().strip("$").strip()
     s = _DOUBLE.sub(r"\\", s)
     s = _repair_slashed_commands(s)
-    # \\ followed by a name is now \name; a lone "\" before a space or the end is meaningless.
-    s = re.sub(r"\\(?=\s|$)", "", s) if not re.search(r"\\\\", s) else s
+    # \\ followed by a name is now \name; a lone "\" at the end is meaningless.
+    s = re.sub(r"\\$", "", s) if not re.search(r"\\\\", s) else s
     # Text mode words such as "\text{ rate }" are fine. Bare operator words are not: "exp(x)" is fine too, so leave them alone.
     return s
 

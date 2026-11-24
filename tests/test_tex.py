@@ -11,11 +11,19 @@ from manimate.tex import normalize_tex, tex_to_plain
     ("\x0crac{1}{2}", r"\frac{1}{2}"),            # JSON turned \f into a form feed
     ("\\sin\\theta + \x08eta", r"\sin\theta + \beta"),
     (r"N_s = \frac{120\,f}{P}", r"N_s = \frac{120\,f}{P}"),  # already right: unchanged
+    (r"a\ b", r"a\ b"),                            # TeX control space preserved
+    ("x = y\\", "x = y"),                          # lone trailing backslash dropped
     (r"a/sigma", r"a/sigma"),                      # a division, not a command
     (r"$E = mc^2$", r"E = mc^2"),
 ])
 def test_normalize_tex(raw, fixed):
     assert normalize_tex(raw) == fixed
+
+
+def test_normalize_tex_preserves_control_space():
+    assert normalize_tex(r"a\ b") == r"a\ b"
+    assert normalize_tex(r"\alpha\ \beta") == r"\alpha\ \beta"
+    assert normalize_tex(r"N_s = \frac{120\ f}{P}") == r"N_s = \frac{120\ f}{P}"
 
 
 
