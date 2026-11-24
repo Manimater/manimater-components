@@ -174,3 +174,38 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+@pytest.mark.parametrize("title", ["", "   ", "\t\n"])
+def test_blank_storyboard_title_rejected(title):
+    out, errs = validate(sb(("rotating_field", {}), title=title))
+    assert out is None
+    assert any(e.startswith("title:") for e in errs)
+
+
+@pytest.mark.parametrize("title", ["Python Tutorial", "  Python Tutorial  "])
+def test_storyboard_title_normalized(title):
+    out, errs = validate(sb(("rotating_field", {}), title=title))
+    assert not errs
+    assert out is not None
+    assert out.title == "Python Tutorial"
+
+
+@pytest.mark.parametrize("component", ["", "   ", "\t\n"])
+def test_blank_scene_component_rejected(component):
+    out, errs = validate(sb((component, {})))
+    assert out is None
+    assert any(e.startswith("scenes.0.component:") for e in errs)
+
+
+@pytest.mark.parametrize("component", ["rotating_field", "  rotating_field  "])
+def test_scene_component_normalized(component):
+    out, errs = validate(sb((component, {})))
+    assert not errs
+    assert out is not None
+    assert out.scenes[0].component == "rotating_field"
+
+
+def test_storyboard_title_max_length():
+    out, errs = validate(sb(("rotating_field", {}), title="a" * 121))
+    assert out is None
+    assert any(e.startswith("title:") for e in errs)

@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from . import registry
 from .components import load_all
@@ -17,14 +17,25 @@ MAX_TOTAL_S = 150.0
 
 
 class Scene(BaseModel):
-    component: str
+    component: str = Field(min_length=1)
     params: dict[str, Any] = Field(default_factory=dict)
     narration: str = Field(default="", max_length=400)
 
+    @field_validator("component", mode="before")
+    @classmethod
+    def strip_component(cls, value: Any) -> Any:
+        return value.strip() if isinstance(value, str) else value
+
 
 class Storyboard(BaseModel):
-    title: str = Field(max_length=120)
+    title: str = Field(min_length=1, max_length=120)
     scenes: list[Scene] = Field(min_length=1, max_length=MAX_SCENES)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def strip_title(cls, value: Any) -> Any:
+        return value.strip() if isinstance(value, str) else value
+
 
 
 def _norm(text: str) -> str:
