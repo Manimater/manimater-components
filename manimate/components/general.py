@@ -227,6 +227,22 @@ def callout(ctx: Ctx, text: str, kind: str = "takeaway") -> None:
     ctx.play(Indicate(box, color=color, scale_factor=1.03), run_time=0.8)
 
 
+def _validate_bar_chart(params: dict) -> str | None:
+    labels = params["labels"]
+    values = params["values"]
+
+    if len(labels) != len(values):
+        return "labels and values must have equal lengths"
+
+    if not 2 <= len(values) <= 8:
+        return "bar chart needs 2 to 8 values"
+
+    if any(v < 0 for v in values):
+        return "bar chart values must be non-negative"
+
+    return None
+
+
 @component(
     "bar_chart", "A simple bar chart comparing 2-8 values.",
     {"title": P("string", "Chart title", default=""),
@@ -234,10 +250,15 @@ def callout(ctx: Ctx, text: str, kind: str = "takeaway") -> None:
      "values": P("number[]", "One number per label", required=True),
      "unit": P("string", "Unit shown after each value, e.g. 'rpm'", default="")},
     {"title": "Synchronous speed at 50 Hz", "labels": ["2 poles", "4 poles", "6 poles"], "values": [3000, 1500, 1000], "unit": "rpm"},
+    validator=_validate_bar_chart,
 )
 def bar_chart(ctx: Ctx, labels: list[str], values: list[float], title: str = "", unit: str = "") -> None:
-    n = min(len(labels), len(values), 8)
-    labels, values = labels[:n], [max(0.0, float(v)) for v in values[:n]]
+    error = _validate_bar_chart({"labels": labels, "values": values})
+    if error:
+        raise ValueError(error)
+
+    n = len(labels)
+    values = [float(v) for v in values]
     top = max(values) or 1.0
     base_y, max_h, width = -1.6, 3.8, min(1.3, 10 / max(n, 1) * 0.7)
     gap = min(2.0, 11 / max(n, 1))

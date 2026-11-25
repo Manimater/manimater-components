@@ -174,3 +174,43 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+@pytest.mark.parametrize("labels,values,message", [
+    (["A", "B"], [100, -50], "non-negative"),
+    (["A", "B", "C"], [100, 50], "equal lengths"),
+    (["A", "B"], [100, 50, 80], "equal lengths"),
+    ([], [], "2 to 8"),
+    (["A"], [100], "2 to 8"),
+])
+def test_bar_chart_rejects_invalid_data(labels, values, message):
+    raw = {
+        "title": "Bar chart",
+        "scenes": [{
+            "component": "bar_chart",
+            "params": {"labels": labels, "values": values},
+        }],
+    }
+    _, errors = validate(raw)
+    assert any(message in e for e in errors)
+
+
+@pytest.mark.parametrize("values", [
+    [0, 0, 0],
+    [50, 50, 50],
+    [100, 50, 80],
+    [100, 0, 80],
+])
+def test_bar_chart_accepts_valid_data(values):
+    raw = {
+        "title": "Bar chart",
+        "scenes": [{
+            "component": "bar_chart",
+            "params": {
+                "labels": ["A", "B", "C"],
+                "values": values,
+            },
+        }],
+    }
+    _, errors = validate(raw)
+    assert not errors

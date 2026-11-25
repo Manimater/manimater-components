@@ -47,6 +47,8 @@ class Component:
     fn: Callable
     plugin: str | None = None  # a key of plugins.PLUGINS when the component draws with a community Manim plugin
 
+    validator: Callable[[dict[str, Any]], str | None] | None = None
+
     def to_catalog(self) -> dict:
         entry = {
             "name": self.name,
@@ -64,7 +66,8 @@ _REGISTRY: dict[str, Component] = {}
 
 
 def component(name: str, description: str, params: dict[str, Param], example: dict[str, Any], domain: str = "general",
-              plugin: str | None = None):
+              plugin: str | None = None,
+              validator: Callable[[dict[str, Any]], str | None] | None = None):
     """Register a function ``fn(ctx, **params)`` as a storyboard component.
 
     ``plugin`` names the community Manim plugin it wraps (a key of ``plugins.PLUGINS``), so the catalog and the website
@@ -76,7 +79,7 @@ def component(name: str, description: str, params: dict[str, Param], example: di
     def deco(fn: Callable) -> Callable:
         if name in _REGISTRY:
             raise ValueError(f"duplicate component {name!r}")
-        _REGISTRY[name] = Component(name, description, domain, params, example, fn, plugin)
+        _REGISTRY[name] = Component(name, description, domain, params, example, fn, plugin, validator)
         return fn
 
     return deco
@@ -155,4 +158,9 @@ def validate_params(comp: Component, params: dict[str, Any]) -> tuple[dict[str, 
             errors.append(f"param '{key}' {err}")
         else:
             clean[key] = v
+    if not errors and comp.validator is not None:
+        err = comp.validator(clean)
+        if err:
+            errors.append(err)
+
     return clean, errors
