@@ -1,7 +1,6 @@
 """Storyboard model and validation against the component registry."""
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError
@@ -27,8 +26,6 @@ class Storyboard(BaseModel):
     scenes: list[Scene] = Field(min_length=1, max_length=MAX_SCENES)
 
 
-def _norm(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
 
 def _sentence(text: str) -> str:
