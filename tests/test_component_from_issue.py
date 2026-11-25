@@ -68,3 +68,22 @@ def test_names_must_be_valid_and_unused(root):
 def test_bad_tests_are_rejected(root):
     r = cfi.process(form(tests="```python\nimport subprocess\n```"))
     assert not r["ok"] and any("subprocess" in e for e in r["errors"])
+
+
+def test_parse_form_preserves_fenced_headings():
+    code = "### Helpers\n#### Details\nx = 1\n"
+    tests = "### Tests\n#### Details\ndef test_x():\n    assert 1\n"
+    sections = cfi.parse_form(
+        form(code=code, tests="```python\n" + tests + "```")
+    )
+    assert cfi.unfence(sections["Python code"]) == code
+    assert cfi.unfence(sections["Test code (optional)"]) == tests
+    assert sections["Anything else? (optional)"] == ""
+
+
+def test_unclosed_code_fence_is_rejected(root):
+    body = form().replace("```\n\n### Test code", "\n\n### Test code", 1)
+    result = cfi.process(body)
+    assert not result["ok"]
+    assert any("Unclosed code fence" in e for e in result["errors"])
+    assert not list((root / "manimate/components/community").glob("*.py"))

@@ -29,12 +29,45 @@ TEST_ALLOWED = _safety.ALLOWED_IMPORTS | {"pytest", "manimate"}
 
 
 def parse_form(body: str) -> dict[str, str]:
-    """Split a GitHub issue-form body ("### Label\\n\\nvalue" sections) into {label: value}."""
+    """Split issue-form sections without splitting fenced code."""
     sections: dict[str, str] = {}
-    parts = re.split(r"^### +(.+?)\s*$", body.replace("\r\n", "\n"), flags=re.M)
-    for label, value in zip(parts[1::2], parts[2::2]):
-        value = value.strip()
-        sections[label.strip()] = "" if value == "_No response_" else value
+    label = None
+    lines: list[str] = []
+    fence = None
+
+    def save():
+        if label is not None:
+            value = "\n".join(lines).strip()
+            sections[label] = "" if value == "_No response_" else value
+
+    for line in body.replace("\r\n", "\n").split("\n"):
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+
+        if fence is not None:
+            lines.append(line)
+            if (marker and marker[1][0] == fence[0]
+                    and len(marker[1]) >= len(fence)
+                    and not marker[2].strip()):
+                fence = None
+            continue
+
+        if marker:
+            fence = marker[1]
+            lines.append(line)
+            continue
+
+        heading = re.match(r"^### +(.+?)\s*$", line)
+        if heading:
+            save()
+            label = heading[1].strip()
+            lines = []
+        else:
+            lines.append(line)
+
+    if fence is not None:
+        raise ValueError("Unclosed code fence in issue form.")
+
+    save()
     return sections
 
 
@@ -80,7 +113,10 @@ def declared_names(src: str) -> list[str]:
 
 
 def process(body: str) -> dict:
-    sections = parse_form(body)
+    try:
+        sections = parse_form(body)
+    except ValueError as exc:
+        return {"ok": False, "errors": [str(exc)]}
     name = find(sections, "component name").strip().strip("`")
     code = unfence(find(sections, "python code")) if find(sections, "python code") else ""
     tests = unfence(find(sections, "test code")) if find(sections, "test code") else ""
