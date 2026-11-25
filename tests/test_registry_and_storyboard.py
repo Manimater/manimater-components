@@ -174,3 +174,34 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+@pytest.mark.parametrize("expression", [
+    "x^2",
+    "sin(x) + sin(3*x)/3 + sin(5*x)/5 + sin(7*x)/7 + sin(9*x)/9",
+])
+def test_function_plot_caption_fits(expression, monkeypatch):
+    from manimate.components import general
+
+    captions = []
+    original_text = general.Text
+
+    def capture_text(text, *args, **kwargs):
+        mob = original_text(text, *args, **kwargs)
+        if text == f"y = {expression}":
+            captions.append(mob)
+        return mob
+
+    class FakeCtx:
+        remaining = 8.0
+
+        def play(self, *args, **kwargs):
+            pass
+
+    monkeypatch.setattr(general, "Text", capture_text)
+    monkeypatch.setattr(general, "HAS_LATEX", False)
+
+    general.function_plot(FakeCtx(), expression=expression)
+
+    assert len(captions) == 1
+    assert captions[0].width <= general.STAGE_W + 1e-6
