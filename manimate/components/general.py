@@ -15,6 +15,20 @@ from ..registry import Param as P, component
 from ..safe_expr import compile_expr, validate_expr
 
 
+def _tick_decimals(step: float) -> int:
+    return max(0, -math.floor(math.log10(step)))
+
+
+def _tick_labels(values, step: float) -> list[tuple[float, str]]:
+    """Format nonzero tick values without requiring LaTeX."""
+    decimals = _tick_decimals(step)
+    return [
+        (float(value), f"{value:.{decimals}f}")
+        for value in values
+        if not math.isclose(value, 0, abs_tol=step * 1e-9)
+    ]
+
+
 def _nice_step(span: float, target: int) -> float:
     raw = span / target
     mag = 10 ** math.floor(math.log10(raw))
@@ -119,11 +133,10 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
         y_min, y_max = -1.5, 1.5
     f = compile_expr(expression)
     xs, ys = _nice_step(x_max - x_min, 8), _nice_step(y_max - y_min, 4)
-    dec = lambda st: max(0, -math.floor(math.log10(st)))
     axes = Axes(x_range=[x_min, x_max, xs], y_range=[y_min, y_max, ys], x_length=10, y_length=4.4,
                 axis_config={"color": theme.MUTED, "include_numbers": HAS_LATEX, "font_size": 20, "include_tip": True},
-                x_axis_config={"decimal_number_config": {"num_decimal_places": dec(xs)}},
-                y_axis_config={"decimal_number_config": {"num_decimal_places": dec(ys)}},
+                x_axis_config={"decimal_number_config": {"num_decimal_places": _tick_decimals(xs)}},
+                y_axis_config={"decimal_number_config": {"num_decimal_places": _tick_decimals(ys)}},
                 ).move_to((0, 0.1, 0))
     curve = axes.plot(f, color=theme.ACCENT, stroke_width=5, use_smoothing=False,
                       x_range=[x_min, x_max, (x_max - x_min) / 300])
@@ -132,7 +145,22 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
     expr = Text(f"y = {expression}", font_size=26, color=theme.YELLOW).to_edge(DOWN, buff=1.5)
     if title:
         ctx.play(Write(ctx.heading(title)), run_time=0.7)
-    ctx.play(Create(axes), FadeIn(xl), FadeIn(yl), run_time=1.0)
+    animations = [Create(axes), FadeIn(xl), FadeIn(yl)]
+    if not HAS_LATEX:
+        numbers = VGroup()
+        for value, text in _tick_labels(axes.x_axis.get_tick_range(), xs):
+            numbers.add(
+                Text(text, font_size=20, color=theme.MUTED)
+                .next_to(axes.x_axis.n2p(value), DOWN, buff=0.12)
+            )
+        for value, text in _tick_labels(axes.y_axis.get_tick_range(), ys):
+            numbers.add(
+                Text(text, font_size=20, color=theme.MUTED)
+                .next_to(axes.y_axis.n2p(value), LEFT, buff=0.12)
+            )
+        if len(numbers):
+            animations.append(FadeIn(numbers))
+    ctx.play(*animations, run_time=1.0)
     ctx.play(Create(curve), run_time=max(1.5, min(4.0, ctx.remaining - 1.0)))
     ctx.play(FadeIn(expr), run_time=0.5)
 

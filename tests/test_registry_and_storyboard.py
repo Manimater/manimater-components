@@ -174,3 +174,39 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+def test_tick_labels_integer_values():
+    from manimate.components.general import _tick_labels
+
+    assert _tick_labels([-2, -1, 0, 1, 2], 1) == [
+        (-2, "-2"), (-1, "-1"), (1, "1"), (2, "2")
+    ]
+
+
+def test_tick_labels_fractional_values():
+    from manimate.components.general import _tick_labels
+
+    assert _tick_labels([-0.5, 0, 0.5, 1.0], 0.5) == [
+        (-0.5, "-0.5"), (0.5, "0.5"), (1.0, "1.0")
+    ]
+
+
+def test_tick_labels_near_zero():
+    from manimate.components.general import _tick_labels
+
+    assert _tick_labels([-1e-16, 0, 1e-16], 0.1) == []
+
+
+def test_tick_labels_small_decimal_values():
+    from manimate.components.general import _tick_labels
+
+    assert _tick_labels([-0.02, 0, 0.02], 0.02) == [
+        (-0.02, "-0.02"), (0.02, "0.02")
+    ]
+
+
+def test_tick_labels_empty():
+    from manimate.components.general import _tick_labels
+
+    assert _tick_labels([], 1) == []
