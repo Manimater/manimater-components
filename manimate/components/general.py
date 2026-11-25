@@ -137,9 +137,16 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
     ctx.play(FadeIn(expr), run_time=0.5)
 
 
+
+def _list_length_ok(items: list) -> str | None:
+    if not 2 <= len(items) <= 8:
+        return "needs 2 to 8 items"
+    return None
+
+
 @component(
     "flowchart", "A chain of 2-8 labelled boxes connected by arrows (process, signal path, cause and effect).",
-    {"steps": P("string[]", "Box labels in order, under 30 characters each", required=True),
+    {"steps": P("string[]", "Box labels in order, under 30 characters each", required=True, validator=_list_length_ok),
      "title": P("string", "Chart title", default="")},
     {"steps": ["AC supply", "Rotating field", "Rotor locks on", "Shaft torque"], "title": "How it runs"},
 )
@@ -230,8 +237,8 @@ def callout(ctx: Ctx, text: str, kind: str = "takeaway") -> None:
 @component(
     "bar_chart", "A simple bar chart comparing 2-8 values.",
     {"title": P("string", "Chart title", default=""),
-     "labels": P("string[]", "Category names", required=True),
-     "values": P("number[]", "One number per label", required=True),
+     "labels": P("string[]", "Category names", required=True, validator=_list_length_ok),
+     "values": P("number[]", "One number per label", required=True, validator=_list_length_ok),
      "unit": P("string", "Unit shown after each value, e.g. 'rpm'", default="")},
     {"title": "Synchronous speed at 50 Hz", "labels": ["2 poles", "4 poles", "6 poles"], "values": [3000, 1500, 1000], "unit": "rpm"},
 )

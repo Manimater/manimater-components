@@ -174,3 +174,29 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+@pytest.mark.parametrize("component,param", [
+    ("flowchart", "steps"),
+    ("bar_chart", "labels"),
+    ("bar_chart", "values"),
+])
+@pytest.mark.parametrize("length", [0, 1, 2, 8, 9])
+def test_component_list_length_validation(component, param, length):
+    if component == "flowchart":
+        params = {"steps": ["Step"] * length}
+    else:
+        params = {"labels": ["A", "B"], "values": [1, 2]}
+        params[param] = (
+            [1] * length if param == "values"
+            else ["Label"] * length
+        )
+
+    _, errors = validate(sb((component, params)))
+
+    if 2 <= length <= 8:
+        assert not errors, errors
+    elif length > 8:
+        assert any("too many items (max 8)" in str(e) for e in errors)
+    else:
+        assert any("needs 2 to 8 items" in str(e) for e in errors)
