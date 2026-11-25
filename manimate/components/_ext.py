@@ -15,8 +15,8 @@ the same timing, layout, credit and failure behaviour for all of them.
 
 Rules every spec follows
 * The library is imported inside ``build`` (through ``lib``), never at import time, so the registry, the catalog and
-  storyboard validation work on a machine that does not have it. A missing library raises ``PluginMissing`` and
-  ``scene.py`` shows the narration as a callout instead.
+  storyboard validation work on a machine that does not have it. A missing library raises ``PluginMissing``.
+  The renderer decides how to handle the missing plugin.
 * A ``Beat.play`` is a function, not an animation, because many library methods change the diagram's state the moment
   they are called (``diagram.shift_ad(...)`` updates the stored curve). It is called when its beat starts.
 * Only the declared, validated params reach ``build``. Nothing the planner writes is ever executed or imported.

@@ -2,11 +2,10 @@
 
 The plugins are optional at import time: a pack imports its plugin inside the component function (through
 ``require``), so the registry, the catalog and storyboard validation work even on a machine that does not have
-the plugins installed. If a plugin is missing at render time, ``PluginMissing`` is raised and ``scene.py`` shows
-the narration as a callout instead, so the rest of the video still renders.
+the plugins installed. If a plugin is missing at render time, ``PluginMissing`` is raised.
+The renderer decides how to handle the missing plugin.
 
-Plugin versions that were checked against Manim 0.22 on Python 3.11 and 3.12 (see requirements-plugins.txt):
-manim-physics 0.4.0, manim-ml 0.0.24, manim-dsa 0.4.0, manim-chemistry 0.5.1.
+Plugin versions used by CI are pinned in scripts/install_plugins.sh.
 """
 from __future__ import annotations
 
