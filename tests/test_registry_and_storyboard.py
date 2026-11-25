@@ -174,3 +174,56 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+def test_multilingual_scene_duration():
+    from manimate.storyboard import scene_duration
+
+    for text in [
+        "你好世界" * 20,
+        "こんにちは世界" * 20,
+        "안녕하세요" * 20,
+        "สวัสดีครับ" * 20,
+    ]:
+        assert scene_duration(text) == 18.0
+
+
+def test_english_duration_unchanged():
+    from manimate.storyboard import scene_duration
+
+    assert scene_duration("word " * 20) == 20 / 2.6 + 1.5
+
+
+def test_short_narration_duration():
+    from manimate.storyboard import scene_duration
+
+    for text in ["", "Hello", "你好", "こんにちは", "สวัสดี"]:
+        assert scene_duration(text) == 4.0
+
+
+def test_mixed_language_duration():
+    from manimate.storyboard import scene_duration
+
+    text = "word " * 10 + "你好世界" * 5
+    expected = 10 / 2.6 + 20 / 4.5 + 1.5
+    assert scene_duration(text) == expected
+
+
+def test_multilingual_total_duration_cap():
+    for text in [
+        "你好世界" * 80,
+        "こんにちは世界" * 45,
+        "สวัสดีครับ" * 30,
+    ]:
+        raw = {
+            "title": "Multilingual narration",
+            "scenes": [
+                {
+                    "component": "callout",
+                    "params": {"text": "x"},
+                    "narration": text,
+                }
+            ] * 10,
+        }
+        _, errors = validate(raw)
+        assert any("video too long" in e for e in errors)

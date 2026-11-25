@@ -59,8 +59,31 @@ def spoken_text(scene: Scene) -> str:
 
 
 def scene_duration(narration: str) -> float:
-    words = len(narration.split())
-    return max(MIN_SCENE_S, min(MAX_SCENE_S, words / WORDS_PER_SECOND + 1.5))
+    """Estimate narration duration using words and script-specific character rates."""
+    cjk = 0
+    thai = 0
+    remaining = []
+
+    for char in narration:
+        code = ord(char)
+        if (
+            0x3400 <= code <= 0x4DBF
+            or 0x4E00 <= code <= 0x9FFF
+            or 0x3040 <= code <= 0x30FF
+            or 0xAC00 <= code <= 0xD7AF
+            or 0x20000 <= code <= 0x2FA1F
+        ):
+            cjk += 1
+            remaining.append(" ")
+        elif 0x0E00 <= code <= 0x0E7F:
+            thai += 1
+            remaining.append(" ")
+        else:
+            remaining.append(char)
+
+    words = len("".join(remaining).split())
+    seconds = words / WORDS_PER_SECOND + cjk / 4.5 + thai / 5.0
+    return max(MIN_SCENE_S, min(MAX_SCENE_S, seconds + 1.5))
 
 
 def validate(raw: Any) -> tuple[Storyboard | None, list[str]]:
