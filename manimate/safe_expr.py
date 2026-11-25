@@ -54,6 +54,31 @@ def _eval(node: ast.AST, env: dict[str, float]) -> float:
     raise ValueError("bad node")
 
 
+
+_MATH_TRANSLATION = str.maketrans({
+    "×": "*",
+    "·": "*",
+    "÷": "/",
+    "−": "-",
+    "π": "pi",
+    "Π": "pi",
+})
+
+_SUPERSCRIPT_DIGITS = str.maketrans(
+    "⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789"
+)
+
+
+def _normalize_expr(src: str) -> str:
+    src = src.translate(_MATH_TRANSLATION)
+    src = re.sub(
+        r"[⁰¹²³⁴⁵⁶⁷⁸⁹]+",
+        lambda m: "**" + m.group().translate(_SUPERSCRIPT_DIGITS),
+        src,
+    )
+    return src.lower()
+
+
 def compile_expr(src: str, variables: tuple[str, ...] = ("x",)) -> Callable[..., float]:
     """Compile e.g. '2*sin(x) + x**2/10' into a function. Raises ValueError if not allowed.
 
@@ -63,6 +88,7 @@ def compile_expr(src: str, variables: tuple[str, ...] = ("x",)) -> Callable[...,
     variables = tuple(variables)
     if not variables or len(set(variables)) != len(variables) or any(v not in ALLOWED_VARIABLES for v in variables):
         raise ValueError(f"variables must be distinct names from {ALLOWED_VARIABLES}")
+    src = _normalize_expr(src)
     src = re.sub(r"^\s*(y|f\(x\))\s*=\s*", "", src.replace("^", "**"), flags=re.I).strip() if variables == ("x",) \
         else src.replace("^", "**").strip()
     if not src or len(src) > MAX_LEN:

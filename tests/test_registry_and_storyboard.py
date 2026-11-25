@@ -174,3 +174,39 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+@pytest.mark.parametrize("expression,x,expected", [
+    ("2×x", 3, 6),
+    ("x÷2", 6, 3),
+    ("x·2", 3, 6),
+    ("x−1", 3, 2),
+    ("x²", 3, 9),
+    ("x³", 2, 8),
+    ("x¹²", 2, 4096),
+    ("π*x", 2, 6.283185307179586),
+    ("Π*x", 2, 6.283185307179586),
+    ("Sin(x)", 0, 0),
+    ("SIN(x)", 0, 0),
+    ("X^2", 3, 9),
+    ("COS(X)", 0, 1),
+    ("1E-3×X", 2, 0.002),
+    ("Y = 2×X", 3, 6),
+])
+def test_safe_expr_unicode_normalization(expression, x, expected):
+    assert validate_expr(expression) is None
+    assert compile_expr(expression)(x) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("expression", [
+    "__IMPORT__('os')",
+    "X.__CLASS__",
+    "OPEN('f')",
+    "SIN(X, 2)",
+    "[1]",
+    "2X",
+    "X+" * 60 + "X",
+    "X²+" * 30 + "X",
+])
+def test_safe_expr_normalization_preserves_restrictions(expression):
+    assert validate_expr(expression) is not None
