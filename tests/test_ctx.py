@@ -78,3 +78,21 @@ def test_fit_shrinks_only_as_needed_and_centers(width, height):
     assert rectangle.width == pytest.approx(width * factor)
     assert rectangle.height == pytest.approx(height * factor)
     assert rectangle.get_center() == pytest.approx(STAGE_CENTER)
+
+
+def test_label_right_alignment():
+    import pytest
+    from manimate.ctx import label
+
+    mob = label("Long line\nShort", align="right")
+    assert mob[0].get_right()[0] == pytest.approx(
+        mob[1].get_right()[0]
+    )
+
+
+def test_label_invalid_alignment():
+    import pytest
+    from manimate.ctx import label
+
+    with pytest.raises(ValueError, match="Invalid alignment"):
+        label("Example", align="invalid")

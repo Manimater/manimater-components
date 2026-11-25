@@ -24,13 +24,19 @@ def wrap(text: str, width: int) -> str:
     return "\n".join(lines)
 
 
+from manim import RIGHT
+
+
 def label(text: str, size: int = 28, color: str = theme.FG, width: int | None = None, align: str = "center", **kw) -> Mobject:
     """Text with optional word-wrap. Multi-line text is built line by line so it can be centred (Manim's Text is left-aligned)."""
+    edges = {"left": LEFT, "center": ORIGIN, "right": RIGHT}
+    if align not in edges:
+        raise ValueError(f"Invalid alignment: {align!r}")
     s = wrap(text, width) if width else text
     if "\n" not in s:
         return Text(s, font_size=size, color=color, **kw)
     lines = [Text(line, font_size=size, color=color, **kw) for line in s.split("\n")]
-    return VGroup(*lines).arrange(DOWN, buff=size * 0.004, aligned_edge=LEFT if align == "left" else ORIGIN)
+    return VGroup(*lines).arrange(DOWN, buff=size * 0.004, aligned_edge=edges[align])
 
 
 class Ctx:
@@ -71,7 +77,7 @@ class Ctx:
         mob.move_to(center)
         return mob
 
-    def heading(self, text: str) -> Text:
+    def heading(self, text: str) -> Mobject:
         h = label(text, 36, theme.ACCENT, width=60, weight="BOLD")
         h.move_to((0, 3.35, 0))
         if h.width > STAGE_W:
