@@ -118,3 +118,36 @@ def test_maintainer_override_label():
 def test_dependabot_titles_are_not_policed():
     assert pol.evaluate(head_ref="dependabot/pip/x", title="Bump manim from 0.19 to 0.20", body="", author="dependabot[bot]",
                         changes=[("M", "pyproject.toml")]) == []
+
+
+@pytest.mark.parametrize("path", [
+    "audio.mp3", "audio.wav", "audio.ogg", "audio.flac", "audio.m4a",
+    "video.mkv", "image.webp", "image.bmp", "image.tif",
+    "image.tiff", "image.heic", "image.ico",
+    "archive.7z", "archive.rar", "archive.bz2", "archive.xz",
+    "archive.jar", "document.pdf", "library.dylib",
+    "data.npy", "data.npz", "model.pkl", "model.pt",
+    "model.onnx", "model.h5", "audio.MP3",
+])
+def test_additional_binary_formats_are_rejected(path):
+    errs = pol.evaluate(
+        head_ref="fix/x", title="fix: tidy things up",
+        body=BODY, author="x", changes=[("A", path)],
+        sizes={path: 100},
+    )
+    assert any(path in e and "binaries and media" in e for e in errs)
+
+
+@pytest.mark.parametrize("path", [
+    ".env.local", ".env.production", "config/.env.dev",
+    "id_ecdsa", "id_dsa", "credentials.json",
+    ".netrc", ".git-credentials",
+    "certificate.pfx", "private.p8", "app.keystore",
+    "assets/private.pfx", "config/.ENV.LOCAL",
+])
+def test_additional_secret_files_are_rejected(path):
+    errs = pol.evaluate(
+        head_ref="fix/x", title="fix: tidy things up",
+        body=BODY, author="x", changes=[("A", path)],
+    )
+    assert any(path in e and "secret or key" in e for e in errs)

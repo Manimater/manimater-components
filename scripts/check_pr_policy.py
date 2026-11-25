@@ -30,9 +30,23 @@ NAME_FULL = re.compile(NAME_RE)
 TITLE_RE = re.compile(r"^(feat|fix|docs|chore|test|ci|refactor|build|perf|revert)(\([a-z0-9_./-]+\))?!?: \S.{3,}$")
 GENERATED = {"catalog.json", "docs/LLM_PROMPT.md", "skills/manimater-components/references/catalog.md"}
 PLUGIN_WIRING = {"manimate/plugins.py", "scripts/install_plugins.sh", "docs/THIRD_PARTY.md"}
-BANNED_SUFFIX = {".mp4", ".mov", ".webm", ".avi", ".gif", ".png", ".jpg", ".jpeg", ".zip", ".tar", ".gz", ".whl", ".so",
-                 ".dll", ".exe", ".pyc", ".pem", ".key", ".p12"}
-SECRET_NAMES = {".env", "id_rsa", "id_ed25519", ".npmrc", ".pypirc"}
+BANNED_SUFFIX = {
+    ".mp4", ".mov", ".webm", ".avi", ".gif", ".png",
+    ".jpg", ".jpeg", ".zip", ".tar", ".gz", ".whl",
+    ".so", ".dll", ".exe", ".pyc",
+    ".mp3", ".wav", ".ogg", ".flac", ".m4a",
+    ".mkv", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".ico",
+    ".7z", ".rar", ".bz2", ".xz", ".jar",
+    ".pdf", ".dylib",
+    ".npy", ".npz", ".pkl", ".pt", ".onnx", ".h5",
+    ".pem", ".key", ".p12", ".pfx", ".p8", ".keystore",
+}
+SECRET_NAMES = {
+    ".env", "id_rsa", "id_ed25519", ".npmrc", ".pypirc",
+    "id_ecdsa", "id_dsa", "credentials.json",
+    ".netrc", ".git-credentials",
+}
+SECRET_SUFFIX = {".pem", ".key", ".p12", ".pfx", ".p8", ".keystore"}
 MAX_BYTES = 1_000_000
 QUESTIONS = ("Teaches", "Params", "Layout", "Beats", "Failure cases")
 BOTS = {"github-actions[bot]", "dependabot[bot]"}
@@ -120,7 +134,7 @@ def evaluate(*, head_ref: str, title: str, body: str, author: str, changes: list
 
     for p in paths:
         suffix, base = Path(p).suffix.lower(), Path(p).name
-        if base in SECRET_NAMES or suffix in {".pem", ".key", ".p12"}:
+        if base.lower() in SECRET_NAMES or base.lower().startswith(".env.") or suffix in SECRET_SUFFIX:
             errors.append(f"`{p}` looks like a secret or key. Remove it from the history, and rotate it if it was real.")
         elif suffix in BANNED_SUFFIX and not p.startswith("assets/"):
             errors.append(f"`{p}`: binaries and media do not belong in the repository (use `assets/` for README images only).")
