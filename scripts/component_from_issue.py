@@ -100,7 +100,7 @@ def process(body: str) -> dict:
                 errors.append("No `@component(\"name\", ...)` declaration was found. Start from the template in docs/LLM_PROMPT.md.")
             elif declared != [name]:
                 errors.append(f"The code declares {declared} but the form says {name!r}. They must match, and each submission is one component.")
-    existing = {c["name"] for c in json.loads((ROOT / "catalog.json").read_text())}
+    existing = {c["name"] for c in json.loads((ROOT / "catalog.json").read_text(encoding="utf-8"))}
     if name in existing:
         errors.append(f"A component named {name!r} already exists. Choose another name.")
     if (ROOT / "manimate/components/community" / f"{name}.py").exists():
@@ -111,13 +111,13 @@ def process(body: str) -> dict:
     files: list[str] = []
     if not errors:
         target = ROOT / "manimate/components/community" / f"{name}.py"
-        target.write_text(code)
+        target.write_text(code, encoding="utf-8", newline="\n")
         files.append(str(target.relative_to(ROOT)))
         if tests.strip():
             tdir = ROOT / "tests/community"
             tdir.mkdir(parents=True, exist_ok=True)
             tfile = tdir / f"test_{name}.py"
-            tfile.write_text(tests)
+            tfile.write_text(tests, encoding="utf-8", newline="\n")
             files.append(str(tfile.relative_to(ROOT)))
     return {"ok": not errors, "name": name, "errors": errors, "files": files,
             "teaches": find(sections, "what does it teach"), "domain": find(sections, "subject area"),
@@ -125,9 +125,9 @@ def process(body: str) -> dict:
 
 
 def main() -> int:
-    body = Path(sys.argv[sys.argv.index("--body-file") + 1]).read_text() if "--body-file" in sys.argv else os.environ.get("ISSUE_BODY", "")
+    body = Path(sys.argv[sys.argv.index("--body-file") + 1]).read_text(encoding="utf-8") if "--body-file" in sys.argv else os.environ.get("ISSUE_BODY", "")
     result = process(body)
-    Path(os.environ.get("RESULT_FILE", "issue-result.json")).write_text(json.dumps(result, indent=2))
+    Path(os.environ.get("RESULT_FILE", "issue-result.json")).write_text(json.dumps(result, indent=2), encoding="utf-8", newline="\n")
     print(json.dumps({k: v for k, v in result.items() if k in ("ok", "name", "errors", "files")}, indent=2))
     return 0
 

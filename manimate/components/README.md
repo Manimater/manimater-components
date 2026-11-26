@@ -28,7 +28,7 @@ Status key: `[ ]` not started, `[~]` PR open, `[x]` merged.
 8. **Example = test.** The `example` passed to `@component` must render. Each component has a pure-logic test plus a
    dry-run against a real `Scene`, like `tests/test_algorithms.py`.
 9. **No jargon in labels.** On-screen text is short (under 28 characters where possible), in plain words.
-10. **Regenerate the catalog**: `python -m manimate.catalog > ../worker/src/catalog.json` (CI diffs it), and copy
+10. **Regenerate the catalog**: `python -m manimate.catalog --out ../worker/src/catalog.json` (CI diffs it), and copy
     to `web/lib/catalog.json`.
 
 ## Per-component design template

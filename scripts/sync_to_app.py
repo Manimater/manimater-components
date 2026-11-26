@@ -72,13 +72,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--summary", default="", help="write the list of changed files (markdown) to this file")
     a = ap.parse_args(argv)
 
-    paths = load_paths((ROOT / PATHS_FILE).read_text())
+    paths = load_paths((ROOT / PATHS_FILE).read_text(encoding="utf-8"))
     raw = git("diff", "--name-status", "--no-renames", f"{a.base}", f"{a.head}")
     changes = [(ln.split("\t")[0][0], ln.split("\t", 1)[1]) for ln in raw.splitlines() if "\t" in ln]
     chosen = select(changes, paths)
     lines = apply(chosen, lambda p: git("show", f"{a.head}:{p}", text=False), Path(a.app_dir), a.dest_root)
     if a.summary:
-        Path(a.summary).write_text("\n".join(lines) + "\n")
+        Path(a.summary).write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
         with open(out, "a") as f:

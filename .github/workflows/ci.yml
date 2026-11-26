@@ -94,11 +94,11 @@ jobs:
       - name: catalog.json and the generated docs are up to date
         # A component changes catalog.json, docs/LLM_PROMPT.md and the skill's catalog.md. Forgetting them is what broke main once.
         run: |
-          python -m manimate.catalog > catalog.json
+          python -m manimate.catalog --out catalog.json
           python scripts/gen_docs.py
           if [ -n "$(git status --porcelain)" ]; then
             git --no-pager diff --stat
-            echo "::error::Generated files are out of date. Run: python -m manimate.catalog > catalog.json && python scripts/gen_docs.py  (then commit the result)"
+            echo "::error::Generated files are out of date. Run: python -m manimate.catalog --out catalog.json && python scripts/gen_docs.py  (then commit the result)"
             exit 1
           fi
 

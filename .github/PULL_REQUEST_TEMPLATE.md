@@ -12,7 +12,7 @@ New component? It must come from a branch named component/<name>, one component 
 
 - [ ] The title is a Conventional Commit, e.g. `fix(viz): clamp negative widths` or `feat(community): add binary_heap`
 - [ ] `python -m pytest` passes locally
-- [ ] I ran `python -m manimate.catalog > catalog.json && python scripts/gen_docs.py` and committed the result
+- [ ] I ran `python -m manimate.catalog --out catalog.json && python scripts/gen_docs.py` and committed the result
 - [ ] This pull request does one thing; unrelated changes are in their own pull request
 - [ ] No network, files, processes, `eval`/`exec`; any plugin is MIT (or CC) and listed in `docs/THIRD_PARTY.md`
 

@@ -88,7 +88,7 @@ wrote (skip it if there is none).
 ## The template (copy its structure)
 
 ```python
-{TEMPLATE.read_text().rstrip()}
+{TEMPLATE.read_text(encoding="utf-8").rstrip()}
 ```
 '''
 
@@ -96,7 +96,7 @@ wrote (skip it if there is none).
 FILES = {
     ROOT / "docs/LLM_PROMPT.md": llm_prompt_md,
     ROOT / "skills/manimater-components/references/catalog.md": catalog_md,
-    ROOT / "skills/manimater-components/references/component-template.py": lambda: TEMPLATE.read_text(),
+    ROOT / "skills/manimater-components/references/component-template.py": lambda: TEMPLATE.read_text(encoding="utf-8"),
 }
 
 
@@ -105,12 +105,12 @@ def main(argv: list[str]) -> int:
     stale = []
     for path, make in FILES.items():
         want = make()
-        have = path.read_text() if path.exists() else None
+        have = path.read_text(encoding="utf-8") if path.exists() else None
         if have != want:
             stale.append(path.relative_to(ROOT))
             if not check:
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(want)
+                path.write_text(want, encoding="utf-8", newline="\n")
     if check and stale:
         print("Out of date (run: python scripts/gen_docs.py):", *map(str, stale), sep="\n  ")
         return 1

@@ -71,7 +71,7 @@ pip install -e ".[dev]"
 
 manimate-preview --list              # every component
 manimate-preview callout             # renders previews/callout.mp4 from the component's own example
-manimate-catalog > catalog.json      # export the component catalog
+manimate-catalog --out catalog.json      # export the component catalog
 ```
 
 The commands are installed by `pip install`. The module forms
