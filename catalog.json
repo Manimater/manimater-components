@@ -3377,5 +3377,45 @@
       "modulation_index": 0.9,
       "carrier_ratio": 21
     }
+  },
+  {
+    "name": "normal_distribution",
+    "domain": "statistics",
+    "description": "Normal distribution, standard deviation bands and comparison of spread.",
+    "params": {
+      "mean": {
+        "type": "number",
+        "required": false,
+        "description": "Mean of the distribution",
+        "default": 0
+      },
+      "std_dev": {
+        "type": "number",
+        "required": false,
+        "description": "Positive standard deviation",
+        "default": 1
+      },
+      "compare_std_dev": {
+        "type": "number",
+        "required": false,
+        "description": "Optional positive comparison deviation"
+      },
+      "bands": {
+        "type": "string",
+        "required": false,
+        "description": "Probability bands to display",
+        "default": "three",
+        "choices": [
+          "none",
+          "one",
+          "three"
+        ]
+      }
+    },
+    "example": {
+      "mean": 0,
+      "std_dev": 1,
+      "bands": "three"
+    }
   }
 ]
