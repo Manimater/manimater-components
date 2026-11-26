@@ -892,6 +892,37 @@
     }
   },
   {
+    "name": "merge_sort",
+    "domain": "computer-science",
+    "description": "Stable merge sort with recursive splits, comparisons and sorted merges.",
+    "params": {
+      "values": {
+        "type": "number[]",
+        "required": false,
+        "description": "2-8 whole numbers from 0 to 99"
+      },
+      "show_counts": {
+        "type": "boolean",
+        "required": false,
+        "description": "Show the running comparison counter",
+        "default": true
+      }
+    },
+    "example": {
+      "values": [
+        38,
+        12,
+        27,
+        43,
+        9,
+        31,
+        18,
+        25
+      ],
+      "show_counts": true
+    }
+  },
+  {
     "name": "queue_operations",
     "domain": "computer-science",
     "description": "A queue of capacity 5 starting with 1, 2, 3: enqueue at the back, dequeue from the front (first in, first out).",
