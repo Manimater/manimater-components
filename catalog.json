@@ -739,6 +739,43 @@
     }
   },
   {
+    "name": "dijkstra",
+    "domain": "computer-science",
+    "description": "Dijkstra's shortest path with weighted edges, relaxation and a distance table.",
+    "params": {
+      "edges": {
+        "type": "string[]",
+        "required": false,
+        "description": "Weighted undirected edges, e.g. A-B:4"
+      },
+      "start": {
+        "type": "string",
+        "required": false,
+        "description": "Starting node",
+        "default": "A"
+      },
+      "target": {
+        "type": "string",
+        "required": false,
+        "description": "Target node",
+        "default": "E"
+      }
+    },
+    "example": {
+      "edges": [
+        "A-B:4",
+        "A-C:2",
+        "B-C:1",
+        "B-D:5",
+        "C-D:8",
+        "D-E:2",
+        "C-E:10"
+      ],
+      "start": "A",
+      "target": "E"
+    }
+  },
+  {
     "name": "dp_table",
     "domain": "computer-science",
     "description": "Dynamic programming on the longest common subsequence of two short words: the table is filled cell by cell from smaller sub-problems, then traced back to read the answer.",
