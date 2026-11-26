@@ -9,11 +9,37 @@ from typing import Callable
 
 _BIN = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv, ast.Pow: math.pow, ast.Mod: op.mod}
 _UN = {ast.UAdd: op.pos, ast.USub: op.neg}
+def _sign(x: float) -> float:
+    return float((x > 0) - (x < 0))
+
+
 _FUNCS = {
-    "sin": math.sin, "cos": math.cos, "tan": math.tan, "exp": math.exp, "log": math.log,
-    "ln": math.log, "sqrt": math.sqrt, "abs": abs, "sinh": math.sinh, "cosh": math.cosh, "tanh": math.tanh,
-    "atan": math.atan, "asin": math.asin, "acos": math.acos,
-    "log10": math.log10, "log2": math.log2, "floor": math.floor, "ceil": math.ceil,
+    "sin": (math.sin, 1),
+    "cos": (math.cos, 1),
+    "tan": (math.tan, 1),
+    "exp": (math.exp, 1),
+    "log": (math.log, 1),
+    "ln": (math.log, 1),
+    "sqrt": (math.sqrt, 1),
+    "abs": (abs, 1),
+    "sinh": (math.sinh, 1),
+    "cosh": (math.cosh, 1),
+    "tanh": (math.tanh, 1),
+    "atan": (math.atan, 1),
+    "asin": (math.asin, 1),
+    "acos": (math.acos, 1),
+    "log10": (math.log10, 1),
+    "log2": (math.log2, 1),
+    "floor": (math.floor, 1),
+    "ceil": (math.ceil, 1),
+    "atan2": (math.atan2, 2),
+    "max": (max, 2),
+    "min": (min, 2),
+    "hypot": (math.hypot, 2),
+    "sign": (_sign, 1),
+    "radians": (math.radians, 1),
+    "sec": (lambda x: 1.0 / math.cos(x), 1),
+    "asinh": (math.asinh, 1),
 }
 _CONSTS = {"pi": math.pi, "e": math.e}
 MAX_LEN = 120
@@ -32,8 +58,9 @@ def _check(node: ast.AST, names: tuple[str, ...] = ("x",)) -> None:
     elif isinstance(node, ast.Name) and (node.id in names or node.id in _CONSTS):
         return
     elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in _FUNCS \
-            and len(node.args) == 1 and not node.keywords:
-        _check(node.args[0], names)
+            and len(node.args) == _FUNCS[node.func.id][1] and not node.keywords:
+        for arg in node.args:
+            _check(arg, names)
     else:
         raise ValueError(f"unsupported syntax: {type(node).__name__}")
 
@@ -50,7 +77,8 @@ def _eval(node: ast.AST, env: dict[str, float]) -> float:
     if isinstance(node, ast.Name):
         return env[node.id] if node.id in env else _CONSTS[node.id]
     if isinstance(node, ast.Call):
-        return _FUNCS[node.func.id](_eval(node.args[0], env))
+        fn, _ = _FUNCS[node.func.id]
+        return fn(*(_eval(arg, env) for arg in node.args))
     raise ValueError("bad node")
 
 

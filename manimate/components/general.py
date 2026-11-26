@@ -103,7 +103,8 @@ def equation(ctx: Ctx, latex: str, title: str = "", terms: list[str] | None = No
 
 @component(
     "function_plot", "Plots y = f(x) on labelled axes. Expression may use x, pi, e; sin, cos, tan, asin, acos, atan; "
-    "sinh, cosh, tanh; exp, log, ln, log10, log2, sqrt, abs, floor, ceil; and + - * / % ^ (or **).",
+    "sinh, cosh, tanh, asinh; exp, log, ln, log10, log2, sqrt, abs, floor, ceil; "
+    "sign, radians, sec; two-argument functions atan2, max, min, hypot; and + - * / % ^ (or **).",
     {"expression": P("string", "e.g. 'sin(x)' or 'x^2/4'", required=True, validator=validate_expr),
      "title": P("string", "Plot title", default=""),
      "x_min": P("number", "Left limit of x", default=-6.3), "x_max": P("number", "Right limit of x", default=6.3),
