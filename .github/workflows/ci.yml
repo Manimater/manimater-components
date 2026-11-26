@@ -111,18 +111,21 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
-      - name: Which components changed?
-        id: changed
+      - name: Detect relevant source changes
+        id: paths
         env: { BASE_SHA: "${{ github.event.pull_request.base.sha }}" }
         run: |
-          names=$(git diff --name-only --diff-filter=AM "$BASE_SHA"...HEAD -- 'manimate/components/community/*.py' \
-                  | xargs -r -n1 basename | sed 's/\.py$//' | grep -v '^_' | grep -v '^__init__$' | tr '\n' ' ' || true)
-          echo "names=${names}" >> "$GITHUB_OUTPUT"
-          echo "Changed components: ${names:-none}"
-      - if: steps.changed.outputs.names != ''
+          git diff --name-only --diff-filter=AMDR "$BASE_SHA"...HEAD -- \
+            manimate/components/ manimate/viz/ manimate/ctx.py \
+            manimate/theme.py manimate/registry.py > "$RUNNER_TEMP/render-paths.txt"
+          if test -s "$RUNNER_TEMP/render-paths.txt"; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.paths.outputs.needed == 'true'
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with: { python-version: "3.11", cache: pip, cache-dependency-path: "pyproject.toml" }
-      - if: steps.changed.outputs.names != ''
+      - if: steps.paths.outputs.needed == 'true'
         name: Install
         run: |
           sudo apt-get update
@@ -130,6 +133,14 @@ jobs:
           sudo apt-get install -y --no-install-recommends $MANIM_PACKAGES
           pip install -e ".[dev]"
           ./scripts/install_plugins.sh
+      - if: steps.paths.outputs.needed == 'true'
+        name: Which components changed?
+        id: changed
+        run: |
+          names=$(python scripts/select_render_components.py < "$RUNNER_TEMP/render-paths.txt")
+          echo "names=${names}" >> "$GITHUB_OUTPUT"
+          echo "Changed components: ${names:-none}"
+
       - if: steps.changed.outputs.names != ''
         name: Render each one for real and check the video
         env: { NAMES: "${{ steps.changed.outputs.names }}" }
