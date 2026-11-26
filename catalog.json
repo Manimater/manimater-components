@@ -322,14 +322,12 @@
       "y_min": {
         "type": "number",
         "required": false,
-        "description": "Bottom limit of y",
-        "default": -1.5
+        "description": "Bottom limit of y (automatic if omitted)"
       },
       "y_max": {
         "type": "number",
         "required": false,
-        "description": "Top limit of y",
-        "default": 1.5
+        "description": "Top limit of y (automatic if omitted)"
       },
       "x_label": {
         "type": "string",

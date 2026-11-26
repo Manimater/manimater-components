@@ -174,3 +174,68 @@ def test_power_pack_param_ranges():
 def test_power_basics_example_valid():
     out, errs = validate(json.loads((EXAMPLES / "power_basics.json").read_text()))
     assert not errs and out is not None
+
+
+def test_function_plot_parabola_range():
+    from manimate.components.general import _estimate_y_range
+
+    lo, hi = _estimate_y_range(lambda x: x ** 2, -6.3, 6.3)
+    assert lo < 0
+    assert hi > 39.69
+
+
+def test_function_plot_constant_range():
+    from manimate.components.general import _estimate_y_range
+
+    lo, hi = _estimate_y_range(lambda x: 5.0, -5, 5)
+    assert lo < 5 < hi
+
+
+def test_function_plot_undefined_samples():
+    import math
+    from manimate.components.general import _estimate_y_range
+    from manimate.safe_expr import compile_expr
+
+    f = compile_expr("sqrt(x)", invalid_value=math.nan)
+    lo, hi = _estimate_y_range(f, -4, 4)
+    assert lo < 0
+    assert hi > 2
+
+
+def test_function_plot_asymptote_range():
+    import math
+    from manimate.components.general import _estimate_y_range
+    from manimate.safe_expr import compile_expr
+
+    f = compile_expr("1/x", invalid_value=math.nan)
+    lo, hi = _estimate_y_range(f, -5, 5)
+    assert math.isfinite(lo)
+    assert math.isfinite(hi)
+    assert -30 < lo < 0 < hi < 30
+
+
+def test_function_plot_inverted_range():
+    import pytest
+    from manimate.components.general import _estimate_y_range
+
+    with pytest.raises(ValueError, match="x_max"):
+        _estimate_y_range(lambda x: x, 5, -5)
+
+
+def test_function_plot_no_finite_samples():
+    import math
+    import pytest
+    from manimate.components.general import _estimate_y_range
+
+    with pytest.raises(ValueError, match="no finite samples"):
+        _estimate_y_range(lambda x: math.nan, -5, 5)
+
+
+def test_compile_expr_invalid_value_compatibility():
+    import math
+    from manimate.safe_expr import compile_expr
+
+    assert compile_expr("1/x")(0) == 0.0
+    assert math.isnan(
+        compile_expr("1/x", invalid_value=math.nan)(0)
+    )

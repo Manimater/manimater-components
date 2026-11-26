@@ -54,7 +54,7 @@ def _eval(node: ast.AST, env: dict[str, float]) -> float:
     raise ValueError("bad node")
 
 
-def compile_expr(src: str, variables: tuple[str, ...] = ("x",)) -> Callable[..., float]:
+def compile_expr(src: str, variables: tuple[str, ...] = ("x",), *, invalid_value: float = 0.0) -> Callable[..., float]:
     """Compile e.g. '2*sin(x) + x**2/10' into a function. Raises ValueError if not allowed.
 
     ``variables`` names the arguments of the returned function, in order (default: just ``x``). Only names from
@@ -78,9 +78,9 @@ def compile_expr(src: str, variables: tuple[str, ...] = ("x",)) -> Callable[...,
             raise TypeError(f"expected {len(variables)} argument(s): {', '.join(variables)}")
         try:
             v = float(_eval(tree, dict(zip(variables, map(float, args)))))
-            return v if math.isfinite(v) else 0.0
+            return v if math.isfinite(v) else invalid_value
         except (ValueError, ZeroDivisionError, OverflowError):
-            return 0.0
+            return invalid_value
 
     return f
 

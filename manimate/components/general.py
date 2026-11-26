@@ -5,7 +5,7 @@ import math
 
 from manim import (
     DOWN, LEFT, RIGHT, UP, Arrow, Axes, Create, FadeIn, Group, LaggedStart, Line, MathTex, ORIGIN,
-    Rectangle, RoundedRectangle, Text, VGroup, Write, Dot, GrowFromEdge, FadeOut, Indicate,
+    Rectangle, RoundedRectangle, Text, VGroup, VMobject, Write, Dot, GrowFromEdge, FadeOut, Indicate,
 )
 
 from .. import theme
@@ -13,6 +13,37 @@ from ..ctx import HAS_LATEX, Ctx, label, wrap
 from ..tex import normalize_tex, tex_to_plain
 from ..registry import Param as P, component
 from ..safe_expr import compile_expr, validate_expr
+
+
+def _estimate_y_range(f, x_min: float, x_max: float) -> tuple[float, float]:
+    """Estimate readable limits from finite function samples."""
+    if not math.isfinite(x_max - x_min) or x_max <= x_min:
+        raise ValueError("x_max must be greater than x_min")
+
+    values = []
+    for i in range(301):
+        x = x_min + (x_max - x_min) * i / 300
+        y = f(x)
+        if math.isfinite(y):
+            values.append(y)
+
+    if not values:
+        raise ValueError("expression has no finite samples")
+
+    values.sort()
+    lo, hi = values[0], values[-1]
+
+    # Trim extreme outliers when they dominate the sampled range.
+    trim = len(values) // 50
+    if trim:
+        inner_lo, inner_hi = values[trim], values[-trim - 1]
+        inner_span = inner_hi - inner_lo
+        if inner_span > 0 and hi - lo > 5 * inner_span:
+            lo, hi = inner_lo, inner_hi
+
+    span = hi - lo
+    padding = span * 0.1 if span else max(1.0, abs(lo) * 0.1)
+    return lo - padding, hi + padding
 
 
 def _nice_step(span: float, target: int) -> float:
@@ -107,17 +138,23 @@ def equation(ctx: Ctx, latex: str, title: str = "", terms: list[str] | None = No
     {"expression": P("string", "e.g. 'sin(x)' or 'x^2/4'", required=True, validator=validate_expr),
      "title": P("string", "Plot title", default=""),
      "x_min": P("number", "Left limit of x", default=-6.3), "x_max": P("number", "Right limit of x", default=6.3),
-     "y_min": P("number", "Bottom limit of y", default=-1.5), "y_max": P("number", "Top limit of y", default=1.5),
+     "y_min": P("number", "Bottom limit of y (automatic if omitted)"), "y_max": P("number", "Top limit of y (automatic if omitted)"),
      "x_label": P("string", "x-axis label", default="x"), "y_label": P("string", "y-axis label", default="y")},
     {"expression": "sin(x)", "title": "A sine wave", "x_label": "angle", "y_label": "value"},
 )
 def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.3, x_max: float = 6.3,
-                  y_min: float = -1.5, y_max: float = 1.5, x_label: str = "x", y_label: str = "y") -> None:
-    if x_max <= x_min:
-        x_min, x_max = -6.3, 6.3
-    if y_max <= y_min:
-        y_min, y_max = -1.5, 1.5
-    f = compile_expr(expression)
+                  y_min: float | None = None, y_max: float | None = None, x_label: str = "x", y_label: str = "y") -> None:
+    if not math.isfinite(x_max - x_min) or x_max <= x_min:
+        raise ValueError("x_max must be greater than x_min")
+
+    if y_min is None or y_max is None:
+        sample_f = compile_expr(expression, invalid_value=math.nan)
+        auto_min, auto_max = _estimate_y_range(sample_f, x_min, x_max)
+        y_min = auto_min if y_min is None else y_min
+        y_max = auto_max if y_max is None else y_max
+
+    if not math.isfinite(y_max - y_min) or y_max <= y_min:
+        raise ValueError("y_max must be greater than y_min")
     xs, ys = _nice_step(x_max - x_min, 8), _nice_step(y_max - y_min, 4)
     dec = lambda st: max(0, -math.floor(math.log10(st)))
     axes = Axes(x_range=[x_min, x_max, xs], y_range=[y_min, y_max, ys], x_length=10, y_length=4.4,
@@ -125,8 +162,28 @@ def function_plot(ctx: Ctx, expression: str, title: str = "", x_min: float = -6.
                 x_axis_config={"decimal_number_config": {"num_decimal_places": dec(xs)}},
                 y_axis_config={"decimal_number_config": {"num_decimal_places": dec(ys)}},
                 ).move_to((0, 0.1, 0))
-    curve = axes.plot(f, color=theme.ACCENT, stroke_width=5, use_smoothing=False,
-                      x_range=[x_min, x_max, (x_max - x_min) / 300])
+    plot_f = compile_expr(expression, invalid_value=math.nan)
+    curve = VGroup()
+    points = []
+
+    for i in range(301):
+        x = x_min + (x_max - x_min) * i / 300
+        y = plot_f(x)
+
+        if not math.isfinite(y) or not y_min <= y <= y_max:
+            if len(points) >= 2:
+                segment = VMobject(color=theme.ACCENT, stroke_width=5)
+                segment.set_points_as_corners(points)
+                curve.add(segment)
+            points = []
+            continue
+
+        points.append(axes.c2p(x, y))
+
+    if len(points) >= 2:
+        segment = VMobject(color=theme.ACCENT, stroke_width=5)
+        segment.set_points_as_corners(points)
+        curve.add(segment)
     xl = axes.get_x_axis_label(Text(x_label, font_size=24, color=theme.MUTED), edge=RIGHT, direction=DOWN, buff=0.3)
     yl = axes.get_y_axis_label(Text(y_label, font_size=24, color=theme.MUTED), edge=UP, direction=LEFT, buff=0.3)
     expr = Text(f"y = {expression}", font_size=26, color=theme.YELLOW).to_edge(DOWN, buff=1.5)
