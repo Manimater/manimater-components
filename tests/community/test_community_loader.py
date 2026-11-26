@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import warnings
 import pathlib
 
 import pytest
@@ -23,7 +24,15 @@ def _dry_run(comp, params, seconds: float = 6.0) -> None:
     with tempconfig({"dry_run": True, "disable_caching": True, "verbosity": "ERROR", "progress_bar": "none",
                      "write_to_movie": False, "frame_rate": 4}):
         scene = Scene()
-        comp.fn(Ctx(scene, seconds), **clean)
+        ctx = Ctx(scene, seconds)
+        comp.fn(ctx, **clean)
+        if ctx.overrun > 0.05:
+            warnings.warn(
+                f"{comp.name} exceeded its {seconds:.2f}s budget "
+                f"by {ctx.overrun:.2f}s",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         scene.play(*[FadeOut(m) for m in scene.mobjects], run_time=0.5)
 
 

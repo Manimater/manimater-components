@@ -45,6 +45,11 @@ class Ctx:
     def remaining(self) -> float:
         return max(0.0, self.duration - self.elapsed)
 
+    @property
+    def overrun(self) -> float:
+        """Seconds spent beyond the scene's time budget."""
+        return max(0.0, self.elapsed - self.duration)
+
     def play(self, *anims, run_time: float = 1.0, **kw) -> None:
         run_time = max(0.1, float(run_time))
         self.scene.play(*anims, run_time=run_time, **kw)

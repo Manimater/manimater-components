@@ -6,6 +6,7 @@ fade-out a storyboard scene performs, wherever manim-extensions is installed (sc
 from __future__ import annotations
 
 import importlib.util
+import warnings
 
 import pytest
 
@@ -86,7 +87,14 @@ def test_component_runs_and_fades_out(name):
     comp = registry.get(name)
     with tempconfig({"dry_run": True, "disable_caching": True, "verbosity": "ERROR", "progress_bar": "none", "write_to_movie": False}):
         scene = Scene()
-        comp.fn(Ctx(scene, 8.0), **comp.example)
+        ctx = Ctx(scene, 8.0)
+        comp.fn(ctx, **comp.example)
+        if ctx.overrun > 0.05:
+            warnings.warn(
+                f"{name} exceeded its 8.00s budget "
+                f"by {ctx.overrun:.2f}s",
+                RuntimeWarning,
+            )
         assert scene.mobjects, "nothing was left on screen"
         scene.play(*[FadeOut(m) for m in scene.mobjects], run_time=0.5)
 
@@ -106,5 +114,12 @@ def test_every_choice_plays(name, param, values, capfd):
     comp = registry.get(name)
     for v in values:
         with tempconfig({"dry_run": True, "disable_caching": True, "verbosity": "ERROR", "progress_bar": "none", "write_to_movie": False}):
-            comp.fn(Ctx(Scene(), 12.0), **{**comp.example, param: v})
+            ctx = Ctx(Scene(), 12.0)
+            comp.fn(ctx, **{**comp.example, param: v})
+            if ctx.overrun > 0.05:
+                warnings.warn(
+                    f"{name} ({param}={v}) exceeded its 12.00s budget "
+                    f"by {ctx.overrun:.2f}s",
+                    RuntimeWarning,
+                )
     assert "Traceback" not in capfd.readouterr().err  # a failing beat is caught by the runner, so check it did not

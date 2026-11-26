@@ -178,5 +178,13 @@ def test_component_runs_and_fades_out(module, name):
     with tempconfig({"dry_run": True, "disable_caching": True, "verbosity": "ERROR", "progress_bar": "none",
                      "write_to_movie": False}):
         scene = Scene()
-        comp.fn(Ctx(scene, 6.0), **comp.example)
+        ctx = Ctx(scene, 6.0)
+        comp.fn(ctx, **comp.example)
+        if ctx.overrun > 0.05:
+            import warnings
+            warnings.warn(
+                f"{comp.name} exceeded its {ctx.duration:.2f}s budget "
+                f"by {ctx.overrun:.2f}s",
+                RuntimeWarning,
+            )
         scene.play(*[FadeOut(m) for m in scene.mobjects], run_time=0.5)  # what storyboard scenes do after a component

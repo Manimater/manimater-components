@@ -1,6 +1,7 @@
 """The computer-science algorithms pack (plain Manim, no plugin): the algorithms are checked on their own, then each
 component is dry-run against a real Scene, followed by the fade-out a storyboard scene performs."""
 import math
+import warnings
 
 import pytest
 
@@ -168,7 +169,15 @@ def _dry_run(name, params, seconds=6.0):
     with tempconfig({"dry_run": True, "disable_caching": True, "verbosity": "ERROR", "progress_bar": "none",
                      "write_to_movie": False, "frame_rate": 4}):
         scene = Scene()
-        comp.fn(Ctx(scene, seconds), **clean)
+        ctx = Ctx(scene, seconds)
+        comp.fn(ctx, **clean)
+        if ctx.overrun > 0.05:
+            warnings.warn(
+                f"{name} exceeded its {seconds:.2f}s budget "
+                f"by {ctx.overrun:.2f}s",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         scene.play(*[FadeOut(m) for m in scene.mobjects], run_time=0.5)
 
 
