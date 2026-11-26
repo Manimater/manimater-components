@@ -294,6 +294,44 @@ def walk(node: _Node | None, kind: str) -> list[int]:
             "postorder": left + right + [node.key]}[kind]
 
 
+
+def bst_layout(root: _Node | None) -> dict[str, tuple[float, float]]:
+    """Return centered BST positions with adaptive spacing."""
+    ordered = []
+
+    def visit(node, depth):
+        if node is None:
+            return
+        visit(node.left, depth + 1)
+        ordered.append((str(node.key), depth))
+        visit(node.right, depth + 1)
+
+    visit(root, 0)
+    if not ordered:
+        return {}
+
+    depth = max(d for _, d in ordered)
+    dy = min(1.4, 3.2 / max(1, depth))
+    dx = min(1.3, 9.2 / max(1, len(ordered) - 1))
+
+    return {
+        key: (
+            (i - (len(ordered) - 1) / 2) * dx,
+            (depth / 2 - d) * dy,
+        )
+        for i, (key, d) in enumerate(ordered)
+    }
+
+
+def bst_is_chain(root: _Node | None) -> bool:
+    """Return whether every node has at most one child."""
+    if root is None:
+        return True
+    if root.left is not None and root.right is not None:
+        return False
+    return bst_is_chain(root.left or root.right)
+
+
 def _bst_values_ok(v: list) -> str | None:
     if not 2 <= len(v) <= 8:
         return "needs 2 to 8 values"
@@ -317,32 +355,34 @@ def _bst_values_ok(v: list) -> str | None:
 def binary_search_tree(ctx: Ctx, values: list[float] | None = None, traversal: str = "inorder") -> None:
     dsa = require("manim_dsa", _PIP)
     root = build_bst([int(v) for v in (values or [8, 3, 10, 1, 6, 14])])
-    # Own layout: x from the in-order position, y from the depth. The plugin's MTree layout puts an only child
-    # straight under its parent, which would hide whether it is a left or a right child.
-    positions: dict[str, np.ndarray] = {}
+    positions = {
+        key: np.array([x, y + _CY - 0.1, 0.0])
+        for key, (x, y) in bst_layout(root).items()
+    }
     children: dict[str, list[str]] = {}
-
-    def place(node: _Node | None, depth: int, counter: list[int]) -> None:
-        if node is None:
-            return
-        place(node.left, depth + 1, counter)
-        positions[str(node.key)] = np.array([counter[0] * 1.3, -depth * 1.4, 0.0])
-        counter[0] += 1
-        place(node.right, depth + 1, counter)
 
     def link(node: _Node | None) -> None:
         if node is None:
             return
-        children[str(node.key)] = [str(c.key) for c in (node.left, node.right) if c is not None]
+        children[str(node.key)] = [
+            str(c.key) for c in (node.left, node.right)
+            if c is not None
+        ]
         link(node.left)
         link(node.right)
 
-    place(root, 0, [0])
     link(root)
     tree = dsa.MGraph(children, nodes_position=positions)
-    fit(tree, max_w=10.0, max_h=3.9, center=(0, _CY - 0.1, 0), max_scale=1.2)
     head = ctx.heading("Binary search tree")
-    ctx.play(Write(head), Create(tree), run_time=min(2.5, max(1.2, ctx.remaining * 0.3)))
+    anims = [Write(head), Create(tree)]
+
+    if bst_is_chain(root) and len(positions) > 2:
+        caption = label(
+            "Worst case: unbalanced tree", 22, theme.WARN
+        ).move_to((0, -1.85, 0))
+        anims.append(FadeIn(caption))
+
+    ctx.play(*anims, run_time=min(2.5, max(1.2, ctx.remaining * 0.3)))
     if traversal != "none":
         seq = walk(root, traversal)
         title = {"inorder": "In-order", "preorder": "Pre-order", "postorder": "Post-order"}[traversal]
