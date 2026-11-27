@@ -40,14 +40,28 @@ def title_card(ctx: Ctx, title: str, subtitle: str = "") -> None:
         ctx.play(FadeIn(g[2], shift=UP * 0.2), run_time=0.8)
 
 
+
+def _validate_bullet_count(points: list[str]) -> str | None:
+    if not 1 <= len(points) <= 6:
+        return "bullet_points requires 1 to 6 points"
+    return None
+
+
+def _validate_term_count(terms: list[str]) -> str | None:
+    if len(terms) > 6:
+        return "equation supports at most 6 terms"
+    return None
+
+
 @component(
     "bullet_points", "A heading with up to 6 key points revealed one by one. Good for lists of facts or steps.",
     {"heading": P("string", "Slide heading", required=True),
-     "points": P("string[]", "3-6 short points (under 70 characters each)", required=True)},
+     "points": P("string[]", "1-6 short points (under 70 characters each)", required=True, validator=_validate_bullet_count)},
     {"heading": "Main parts", "points": ["Stator carries the 3-phase winding", "Rotor carries the DC field", "Air gap links them"]},
 )
 def bullet_points(ctx: Ctx, heading: str, points: list[str]) -> None:
-    points = points[:6]
+    if error := _validate_bullet_count(points):
+        raise ValueError(error)
     head = ctx.heading(heading)
     rows = VGroup(*[
         VGroup(Dot(color=theme.ACCENT, radius=0.08), label(p, 30, theme.FG, width=58, align="left")).arrange(RIGHT, buff=0.35)
@@ -66,11 +80,13 @@ def bullet_points(ctx: Ctx, heading: str, points: list[str]) -> None:
     "equation", "Shows one formula (LaTeX) with an optional title and a legend explaining each symbol.",
     {"latex": P("string", "LaTeX without $ delimiters, e.g. N_s = \\frac{120 f}{P}", required=True),
      "title": P("string", "What the formula gives, e.g. 'Synchronous speed'", default=""),
-     "terms": P("string[]", "Legend lines like 'f: supply frequency (Hz)'", default=[])},
+     "terms": P("string[]", "0-6 legend lines like 'f: supply frequency (Hz)'", default=[], validator=_validate_term_count)},
     {"latex": "N_s = \\frac{120\\,f}{P}", "title": "Synchronous speed",
      "terms": ["N_s: speed in rpm", "f: supply frequency in Hz", "P: number of poles"]},
 )
 def equation(ctx: Ctx, latex: str, title: str = "", terms: list[str] | None = None) -> None:
+    if error := _validate_term_count(terms or []):
+        raise ValueError(error)
     latex = normalize_tex(latex)
     eq = None
     if HAS_LATEX:
@@ -86,7 +102,7 @@ def equation(ctx: Ctx, latex: str, title: str = "", terms: list[str] | None = No
     if title:
         parts.append(label(title, 34, theme.ACCENT, width=50, weight="BOLD"))
     parts.append(eq)
-    legend = VGroup(*[label(t, 26, theme.MUTED, width=70, align="left") for t in (terms or [])[:6]]).arrange(DOWN, aligned_edge=LEFT, buff=0.18)
+    legend = VGroup(*[label(t, 26, theme.MUTED, width=70, align="left") for t in (terms or [])]).arrange(DOWN, aligned_edge=LEFT, buff=0.18)
     if len(legend):
         parts.append(legend)
     g = VGroup(*parts).arrange(DOWN, buff=0.6)

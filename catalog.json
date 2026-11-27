@@ -82,7 +82,7 @@
       "points": {
         "type": "string[]",
         "required": true,
-        "description": "3-6 short points (under 70 characters each)"
+        "description": "1-6 short points (under 70 characters each)"
       }
     },
     "example": {
@@ -210,7 +210,7 @@
       "terms": {
         "type": "string[]",
         "required": false,
-        "description": "Legend lines like 'f: supply frequency (Hz)'",
+        "description": "0-6 legend lines like 'f: supply frequency (Hz)'",
         "default": []
       }
     },
